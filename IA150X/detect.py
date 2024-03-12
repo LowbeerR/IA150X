@@ -17,7 +17,7 @@ model = ConvNet().to(device)
 model.load_state_dict(torch.load('model.pth'))
 model.eval()
 
-classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck', 'Hidden data')
+classes = ('No hidden data', 'Hidden data')
 
 transforms = v2.Compose([
     v2.CenterCrop(size=(224, 224)),
