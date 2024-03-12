@@ -1,3 +1,5 @@
 #Remove Big Files
 /data/
+/training_images/
+/train.csv
 *pth
