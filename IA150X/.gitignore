@@ -3,3 +3,10 @@
 /training_images/
 /train.csv
 *pth
+*.xml
+data/*
+vid*
+static_dataset
+dataset.zip
+/dataset
+*.csv
