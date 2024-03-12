@@ -69,8 +69,9 @@ dataset_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 # Add dataset
 train_dataset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transforms2)
+for i in range(len(train_dataset.targets)):
+    train_dataset.targets[i] = 0
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-
 # Combine datasets
 combined_dataset = torch.utils.data.ConcatDataset([train_dataset, dataset])
 
@@ -145,7 +146,7 @@ class ConvNet(nn.Module):
             nn.Conv2d(64, 128, (3, 3)),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(6195200, 11),
+            nn.Linear(6195200, 2),
         )
 
     def forward(self, x):
