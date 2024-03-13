@@ -59,7 +59,7 @@ def generate_frames(save_location_path, file_name):
         os.rmdir(temp_dir)
 
 
-def zip_dataset(save_location_path, zip_yes_no):
+def zip_dataset(save_location_path, zip_y_n):
     move_location = os.path.join(os.getcwd(), "dataset")
     try:
         os.mkdir(move_location)
@@ -68,7 +68,7 @@ def zip_dataset(save_location_path, zip_yes_no):
     generate_csv()
     shutil.move(os.path.join(os.getcwd(), save_location_path), move_location)
     shutil.move(os.path.join(os.getcwd(), "static_dataset.csv"), move_location)
-    if zip_yes_no.lower() == "yes":
+    if zip_y_n.lower() == "yes":
         shutil.make_archive("dataset", "zip", os.path.join(os.getcwd(), "dataset"))
 
 
