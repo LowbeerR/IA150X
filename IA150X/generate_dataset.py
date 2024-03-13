@@ -3,6 +3,7 @@ import ffmpeg
 import csv
 import shutil
 import sys
+import json
 
 path = "vid.avi"
 path_to_videos = "videos"
@@ -58,7 +59,7 @@ def generate_frames(save_location_path, file_name):
         os.rmdir(temp_dir)
 
 
-def zip_dataset(save_location_path):
+def zip_dataset(save_location_path, zip_yes_no):
     move_location = os.path.join(os.getcwd(), "dataset")
     try:
         os.mkdir(move_location)
@@ -67,22 +68,40 @@ def zip_dataset(save_location_path):
     generate_csv()
     shutil.move(os.path.join(os.getcwd(), save_location_path), move_location)
     shutil.move(os.path.join(os.getcwd(), "static_dataset.csv"), move_location)
-    shutil.make_archive("dataset", "zip", os.path.join(os.getcwd(), "dataset"))
+    if zip_yes_no.lower() == "yes":
+        shutil.make_archive("dataset", "zip", os.path.join(os.getcwd(), "dataset"))
 
 
 def generate_frames_multiple_videos(save_location_path, path_to_video_folder):
+    y_or_n = "n"
     for file in os.listdir(path_to_video_folder):
         generate_frames(save_location_path, os.path.join(path_to_videos, file))
 
-    if input("zip dataset & generate CSV? (yes/no)").lower() == "yes":
+    if input("generate dataset & CSV? (y/n)").lower() == "y":
         try:
-            zip_dataset(save_location_path)
-            print("dataset.zip created!")
+            if input("zip dataset? (y/n)").lower() == "y":
+                y_or_n = "y"
+            zip_dataset(save_location_path, y_or_n)
+            print("dataset created!")
         except OSError:
-            print("zipped dataset already exists")
+            if input("zipped dataset already exists, remove existing dataset and create a new? (y/n)").lower() == "y":
+                shutil.rmtree('./dataset')
+                zip_dataset(save_location_path, y_or_n)
+
+
+def get_fps(file_name):
+    data = ffmpeg.probe(file_name)
+    return int(data["streams"][0]["r_frame_rate"].split("/")[0])
+
+
+def get_total_nr_frames(file_name):
+    return get_fps(file_name) * get_length(file_name)
+
+
+def get_length(file_name):
+    data = ffmpeg.probe(file_name)
+    return int(data["streams"][0]["duration"].split(".")[0])
 
 
 if __name__ == "__main__":
-
-    generate_frames_multiple_videos(input("save location path (./data): "), input("\nRelative path to videos (./videos): "))
-
+    generate_frames_multiple_videos("data", "./videos")
