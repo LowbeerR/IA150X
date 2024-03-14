@@ -1,4 +1,5 @@
 import torch
+import time
 from torch.utils.data import DataLoader
 import torchvision
 import matplotlib.pyplot as plt
@@ -53,6 +54,7 @@ if __name__ == "__main__":
                 #print(f"Error: {e}")
                 try:
                     # video = read_video(path[1:-1],start_pts=0, end_pts=100, pts_unit='sec', output_format="TCHW")
+                    time1 = time.time()
                     video_reader = torchvision.io.VideoReader(path[1:-1], "video")
                 except Exception as f:
                     print(f"Error: {e, f}")
@@ -61,7 +63,7 @@ if __name__ == "__main__":
                     n_samples = 0
                     print("checking video for hidden data")
                     for entry in video_reader: # video[0]:
-                        if n_samples > 5000:
+                        if n_samples >= 6000:
                             break
                         frame = entry['data']
                         frame = transforms(frame).unsqueeze(0).to(device)
@@ -72,7 +74,8 @@ if __name__ == "__main__":
                             n_samples += 1
                             if predicted == 1:
                                 hidden += 1
-                    print(f"Hidden data chance: {100*hidden/n_samples:.0f}%")
+                    time2 = time.time()
+                    print(f"Hidden data chance: {100*hidden/n_samples:.0f}%, Time: {time2-time1:} Nr_frames: {n_samples}")
             else:
                 image = transforms(image).unsqueeze(0).to(device)
                 img = torchvision.utils.make_grid(image).to('cpu')
