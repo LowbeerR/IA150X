@@ -8,7 +8,7 @@ import os
 import pandas as pd
 from torchvision.io import read_image
 from torchvision.transforms import v2
-from torchvision.tv_tensors._dataset_wrapper import wrap_dataset_for_transforms_v2
+from torch.utils.data.dataloader import default_collate
 
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -20,7 +20,7 @@ learning_rate = 0.001
 
 # Resize pictures
 transforms = v2.Compose([
-    v2.RandomResizedCrop(size=(224, 224), antialias=True),
+    v2.RandomResizedCrop(size=(256, 256), antialias=True),
     v2.RandomHorizontalFlip(p=0.5),
     v2.ToDtype(torch.float32, scale=True),
     v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
@@ -28,7 +28,7 @@ transforms = v2.Compose([
 
 transforms2 = v2.Compose([
     v2.ToImage(),
-    v2.RandomResizedCrop(size=(224, 224), antialias=True),
+    v2.RandomResizedCrop(size=(256, 256), antialias=True),
     v2.RandomHorizontalFlip(p=0.5),
     v2.ToDtype(torch.float32, scale=True),
     v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
@@ -64,14 +64,14 @@ class CustomImageDataset(Dataset):
 
 
 # Create dataset
-dataset = CustomImageDataset(annotations_file='train.csv', img_dir='training_images', transform=transforms)
-dataset_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+dataset = CustomImageDataset(annotations_file='dataset/static_dataset.csv', img_dir='dataset/data2', transform=transforms)
+# dataset_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 # Add dataset
 train_dataset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transforms2)
 for i in range(len(train_dataset.targets)):
     train_dataset.targets[i] = 0
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+# train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 # Combine datasets
 combined_dataset = torch.utils.data.ConcatDataset([train_dataset, dataset])
 
@@ -86,11 +86,11 @@ def imshow(img):
 
 
 # Get some random training images
-dataiter = iter(dataset_loader)
-images, labels = next(dataiter)
+# dataiter = iter(dataset_loader)
+# images, labels = next(dataiter)
 
 # Show images
-imshow(torchvision.utils.make_grid(images))
+# imshow(torchvision.utils.make_grid(images))
 
 
 def test_loop(dataloader):
@@ -146,7 +146,7 @@ class ConvNet(nn.Module):
             nn.Conv2d(64, 128, (3, 3)),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(6195200, 2),
+            nn.Linear(8128512, 2),
         )
 
     def forward(self, x):
@@ -161,10 +161,11 @@ optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
 if __name__ == "__main__":
     model.train()
-    i = 0
+    tot_len = 60000
     for epoch in range(num_epochs):
+        i = 0
         for batch in combined_loader:
-            i += 2
+            i += len(batch[0])
             inputs, labels = batch
             inputs, labels = inputs.to(device=device), labels.to(device=device)
             pred_label = model(inputs)
@@ -173,6 +174,8 @@ if __name__ == "__main__":
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            if i % 2000 == 0:
+                print(f"Loading: {100*i/tot_len:.0f} %")
         print(f"Epoch: {epoch+1}, Loss: {loss.item()}")
 
     torch.save(model.state_dict(), 'model.pth')
