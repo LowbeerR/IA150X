@@ -6,8 +6,8 @@ import sys
 import json
 
 path = "vid.avi"
-path_to_videos = "videos"
-target_dir = os.path.join(os.getcwd(), "data")
+#path_to_videos = "videos"
+target_dir = os.path.join(os.getcwd(), "data2")
 frames = sys.get_int_max_str_digits()
 
 
@@ -75,7 +75,7 @@ def zip_dataset(save_location_path, zip_y_n):
 def generate_frames_multiple_videos(save_location_path, path_to_video_folder):
     y_or_n = "n"
     for file in os.listdir(path_to_video_folder):
-        generate_frames(save_location_path, os.path.join(path_to_videos, file))
+        generate_frames(save_location_path, os.path.join(path_to_video_folder, file))
 
     if input("generate dataset & CSV? (y/n)").lower() == "y":
         try:
@@ -104,4 +104,4 @@ def get_length(file_name):
 
 
 if __name__ == "__main__":
-    generate_frames_multiple_videos("data", "./videos")
+    generate_frames_multiple_videos("data2", "videos")
