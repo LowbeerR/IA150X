@@ -52,7 +52,7 @@ if __name__ == "__main__":
             except Exception as e:
                 #print(f"Error: {e}")
                 try:
-                    video = read_video(path[1:-1],start_pts=0, end_pts=100, pts_unit='sec', output_format="TCHW")
+                    # video = read_video(path[1:-1],start_pts=0, end_pts=100, pts_unit='sec', output_format="TCHW")
                     video_reader = torchvision.io.VideoReader(path[1:-1], "video")
                 except Exception as f:
                     print(f"Error: {e, f}")
@@ -60,7 +60,10 @@ if __name__ == "__main__":
                     hidden = 0
                     n_samples = 0
                     print("checking video for hidden data")
-                    for frame in video[0]:
+                    for entry in video_reader: # video[0]:
+                        if n_samples > 5000:
+                            break
+                        frame = entry['data']
                         frame = transforms(frame).unsqueeze(0).to(device)
                         model.eval()
                         with torch.no_grad():
