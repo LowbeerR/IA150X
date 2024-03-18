@@ -19,7 +19,6 @@ transforms = v2.Compose([
     v2.RandomHorizontalFlip(p=0.5),
     v2.ToDtype(torch.float32, scale=True),
     v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-    v2.Grayscale(num_output_channels=3)
 ])
 
 if __name__ == "__main__":
@@ -27,8 +26,8 @@ if __name__ == "__main__":
         path = str(input("Paste the path\n"))
         if path == "test":
             batch_size = 32
-            testset = CustomImageDataset(annotations_file='C:/Users/Rikard/Downloads/training_images/train2.csv', img_dir='C:/Users/Rikard/Downloads/training_images/testing_images', transform=transforms)
-            #testset = CustomImageDataset(annotations_file='C:/Users/Rikard/Downloads/dataset/static_dataset.csv', img_dir='C:/Users/Rikard/Downloads/dataset/data', transform=transforms)
+            #testset = CustomImageDataset(annotations_file='C:/Users/Rikard/Downloads/training_images/train2.csv', img_dir='C:/Users/Rikard/Downloads/training_images/testing_images', transform=transforms)
+            testset = CustomImageDataset(annotations_file='C:/Users/Rikard/Downloads/dataset/static_dataset.csv', img_dir='C:/Users/Rikard/Downloads/dataset/data', transform=transforms)
             #testset = CustomImageDataset(annotations_file='C:/Users/Rikard/Downloads/mappa/dataset1/static_dataset.csv',img_dir='C:/Users/Rikard/Downloads/mappa/dataset1/data22', transform=transforms)
             testset_loader = DataLoader(testset, batch_size=batch_size, shuffle=True)
             model.eval()
