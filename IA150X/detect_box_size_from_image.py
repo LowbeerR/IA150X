@@ -25,6 +25,7 @@ def check_box_same_color(size, array, x_pos, y_pos):
 def no_adjacent_pixels_same_color(size, array, x_pos, y_pos):
     if size == 0 or size >= len(array) or size >= len(array[0]):
         raise Exception("size must be larger than 0 or smaller than the list")
+
     # checks that the box is of same color
     if not (check_box_same_color(size, array, x_pos, y_pos)):
         return False
@@ -58,24 +59,22 @@ def no_adjacent_pixels_same_color(size, array, x_pos, y_pos):
 
 
 def find_box_size(imm_arr):
-    threshold = 5
-    size_limit = 10
-
+    pixels = len(imm_arr[0]) * len(imm_arr)
+    size_limit = 6
     for size in range(1, size_limit + 1):
         box_found_count = 0
+        threshold = (pixels / (size * size)) * 0.01
         for y in range(imm_arr.shape[0] - size + 1):
             for x in range(imm_arr.shape[1] - size + 1):
                 if no_adjacent_pixels_same_color(size, imm_arr, y, x):
                     box_found_count += 1
-                    print(f"One box of size {size} found at (x,y) = ({y}, {x})")
+                    # print(f"One box of size {size} found at (x,y) = ({y}, {x})")
                     if box_found_count >= threshold:
-                        print("Contains hidden data")
+                        print(
+                            f"Frame contains hidden data, found evidence on {box_found_count} places with size {size}")
                         return
-        if box_found_count == 0:
-            print(f"No box of size 0, 1 ... {size} found in image (No hidden data)")
-
-
-0
+        # if box_found_count < threshold:
+        # print(f"No box of size 0, 1 ... {size} found in image (No hidden data)")
 
 
 def video_to_frames(video_path, frames_checked_count):
@@ -92,13 +91,13 @@ def video_to_frames(video_path, frames_checked_count):
     frames_indices = [i * freq for i in range(frames_checked_count)]
     print(frames_indices)
     for frame_index in frames_indices:
-        output_file = os.path.join(temp_dir, f"frame_{frame_index}.png")
-        print(output_file)
+        output_file = os.path.join(temp_dir, f"frame_{frame_index % 30000}.png")
+        print(output_file, frame_index)
         (
             ffmpeg
             .input(video_path)
-            .filter('select', 'gte(n,{})'.format(frame_index))
-            .output(output_file, vframes=1, format='image2', vcodec='mjpeg')
+            .filter('select', f'eq(n,{frame_index % 30000})')  # .format(frame_index))
+            .output(output_file, vframes=1)
             .run()
         )
     check_multiple_frames(temp_dir)
@@ -106,9 +105,12 @@ def video_to_frames(video_path, frames_checked_count):
 
 def check_multiple_frames(folder_path):
     print("folder path", folder_path)
+    frame = 0
     for image in os.listdir(folder_path):
         image_path = os.path.join(folder_path, image)
         black_white = create_black_white_picture(image_path)
+        frame += 1
+        print(f"{image}")
         find_box_size(black_white)
 
 
@@ -135,4 +137,9 @@ def create_black_white_picture(image_path):
 
 if __name__ == "__main__":
     # get list of coordinates that has boxes
-    video_to_frames("lineup_clip_1_clip_1.mp4", 10)
+    while True:
+        path = str(input("Enter the path to the video\n"))
+        try:
+            video_to_frames(path[1:-1], 10)
+        except Exception as e:
+            print(e)
