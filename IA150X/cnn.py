@@ -141,12 +141,12 @@ class ConvNet(nn.Module):
     def __init__(self):
         super(ConvNet, self).__init__()
         self.model = nn.Sequential(
-            nn.Conv2d(3, 64, (3, 3)),
+            nn.Conv2d(3, 16, (3, 3)),
             nn.ReLU(),
-            nn.Conv2d(64, 128, (3, 3)),
+            nn.Conv2d(16, 16, (3, 3)),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(8128512, 2),
+            nn.Linear(1016064, 2),
         )
 
     def forward(self, x):
