@@ -40,7 +40,7 @@ if __name__ == "__main__":
                     labels = labels.to(device)
                     outputs = model(images)
                     # max returns (value ,index)
-                    _, predicted = torch.max(outputs)
+                    _, predicted = torch.max(outputs, 1)
                     n_samples += labels.size(0)
                     n_correct += (predicted == labels).sum().item()
                     hidden += (predicted == 1).sum().item()
