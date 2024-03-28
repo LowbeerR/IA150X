@@ -61,11 +61,10 @@ def generate_frames(save_location_path, file_name):
                 shutil.move(temp_dir + "\\" + file, target_dir + "\\rgb_frame%d.png" % count)
                 count += 1
         else:
-            temp_dir = os.path.join(os.getcwd(), "data_temp")
             ffmpeg.input(file_name).output(temp_dir + '\\frame%d.png', vframes=frames).run()
-        for file in os.listdir(temp_dir):
-            shutil.move(temp_dir + "\\" + file, target_dir + "\\frame%d.png" % count)
-            count += 1
+            for file in os.listdir(temp_dir):
+                shutil.move(temp_dir + "\\" + file, target_dir + "\\frame%d.png" % count)
+                count += 1
         os.rmdir(temp_dir)
 
 
