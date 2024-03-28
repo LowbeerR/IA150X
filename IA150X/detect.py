@@ -18,7 +18,7 @@ transforms = v2.Compose([
     v2.RandomResizedCrop(size=(256, 256)),
     v2.RandomHorizontalFlip(p=0.5),
     v2.ToDtype(torch.float32, scale=True),
-    v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
 if __name__ == "__main__":
@@ -40,7 +40,7 @@ if __name__ == "__main__":
                     labels = labels.to(device)
                     outputs = model(images)
                     # max returns (value ,index)
-                    _, predicted = torch.max(outputs, 1)
+                    _, predicted = torch.max(outputs)
                     n_samples += labels.size(0)
                     n_correct += (predicted == labels).sum().item()
                     hidden += (predicted == 1).sum().item()
