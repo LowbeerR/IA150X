@@ -47,7 +47,10 @@ def generate_frames(save_location_path, file_name):
     count = count_files(save_location_path)
 
     if count <= 0:
-        ffmpeg.input(file_name).output(save_location_path + '\\frame%d.png', vframes=frames).run()
+        if "rbg_" in file_name:
+            ffmpeg.input(file_name).output(save_location_path + '\\rgb_frame%d.png', vframes=frames).run()
+        else:
+            ffmpeg.input(file_name).output(save_location_path + '\\frame%d.png', vframes=frames).run()
     else:
         try:
             os.mkdir("data_temp")
