@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 import torchvision
 import matplotlib.pyplot as plt
@@ -8,7 +7,6 @@ import os
 import pandas as pd
 from torchvision.io import read_image
 from torchvision.transforms import v2
-from torch.utils.data.dataloader import default_collate
 
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

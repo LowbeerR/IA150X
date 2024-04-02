@@ -3,7 +3,7 @@ import time
 from torch.utils.data import DataLoader
 import torchvision
 import matplotlib.pyplot as plt
-from torchvision.io import read_image, read_video
+from torchvision.io import read_image
 from torchvision.transforms import v2
 from cnn import ConvNet, CustomImageDataset
 
