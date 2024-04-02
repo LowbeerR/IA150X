@@ -1,9 +1,7 @@
 import os
 import shutil
-
 import cv2
 import ffmpeg
-import numpy as np
 
 _1x1 = "frame.png"
 _2x2 = "frame3419.png"
