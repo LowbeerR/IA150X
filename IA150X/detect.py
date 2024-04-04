@@ -1,3 +1,5 @@
+import os
+
 import torch
 import time
 from torch.utils.data import DataLoader
@@ -26,9 +28,7 @@ if __name__ == "__main__":
         path = str(input("Paste the path\n"))
         if path == "test":
             batch_size = 32
-            #testset = CustomImageDataset(annotations_file='C:/Users/Rikard/Downloads/training_images/train2.csv', img_dir='C:/Users/Rikard/Downloads/training_images/testing_images', transform=transforms)
-            testset = CustomImageDataset(annotations_file='C:/Users/Rikard/Downloads/dataset/static_dataset.csv', img_dir='C:/Users/Rikard/Downloads/dataset/data', transform=transforms)
-            #testset = CustomImageDataset(annotations_file='C:/Users/Rikard/Downloads/mappa/dataset1/static_dataset.csv',img_dir='C:/Users/Rikard/Downloads/mappa/dataset1/data22', transform=transforms)
+            testset = CustomImageDataset(annotations_file='C:/Users/Rikard/Documents/GitHub/IA150X/IA150X/dataset2/static_dataset.csv', img_dir='C:/Users/Rikard/Documents/GitHub/IA150X/IA150X/dataset2/data3', transform=transforms)
             testset_loader = DataLoader(testset, batch_size=batch_size, shuffle=True)
             model.eval()
             with torch.no_grad():
@@ -46,11 +46,37 @@ if __name__ == "__main__":
                     hidden += (predicted == 1).sum().item()
                 acc = 100.0 * n_correct / n_samples
                 print(f'Accuracy of the network: {acc} %, Hidden data chance: {100*hidden/n_samples:.0f}%')
+        if path == "test2":
+            video_folder = input("Enter the evaluation dataset path \n")[1:-1]
+
+            try:
+                for videos in os.listdir(video_folder):
+                    video_reader = torchvision.io.VideoReader(os.path.join(video_folder, videos), "video")
+                    hidden = 0
+                    n_samples = 0
+                    print("checking video for hidden data")
+                    for entry in video_reader:  # video[0]:
+                        if n_samples >= 6000:
+                            break
+                        frame = entry['data']
+                        frame = transforms(frame).unsqueeze(0).to(device)
+                        model.eval()
+                        with torch.no_grad():
+                            outputs = model(frame)
+                            _, predicted = torch.max(outputs, 1)
+                            n_samples += 1
+                            if predicted == 1:
+                                hidden += 1
+                    time2 = time.time()
+                    print(
+                        f"Hidden data chance: {100 * hidden / n_samples:.0f}%, Nr_frames: {n_samples}")
+            except Exception as e:
+                print("Error")
         else:
             try:
                 image = read_image(path[1:-1])
             except Exception as e:
-                #print(f"Error: {e}")
+                # print(f"Error: {e}")
                 try:
                     # video = read_video(path[1:-1],start_pts=0, end_pts=100, pts_unit='sec', output_format="TCHW")
                     time1 = time.time()
