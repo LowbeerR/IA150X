@@ -61,18 +61,16 @@ class CustomImageDataset(Dataset):
         return image, label
 
 
-# Create dataset
+# Create dataset with ISG pictures
 dataset = CustomImageDataset(annotations_file='dataset/static_dataset.csv', img_dir='dataset/data2', transform=transforms)
-# dataset_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
-# Add dataset
+# Add CIFAR 10
 train_dataset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transforms2)
 for i in range(len(train_dataset.targets)):
     train_dataset.targets[i] = 0
-# train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 # Combine datasets
 combined_dataset = torch.utils.data.ConcatDataset([train_dataset, dataset])
-
+# Make loader for Model Training
 combined_loader = DataLoader(combined_dataset, batch_size=batch_size)
 
 
@@ -112,29 +110,6 @@ def test_loop(dataloader):
     print(f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
 
 
-"""
-class ConvNet(nn.Module):
-    def __init__(self):
-        super(ConvNet, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 11)
-
-    def forward(self, x):
-        # -> n, 3, 32, 32
-        x = self.pool(F.relu(self.conv1(x)))  # -> n, 6, 14, 14
-        x = self.pool(F.relu(self.conv2(x)))  # -> n, 16, 5, 5
-        x = x.view(-1, 16 * 5 * 5)  # -> n, 400
-        x = F.relu(self.fc1(x))  # -> n, 120
-        x = F.relu(self.fc2(x))  # -> n, 84
-        x = self.fc3(x)  # -> n, 10
-        return x
-"""
-
-
 class ConvNet(nn.Module):
     def __init__(self):
         super(ConvNet, self).__init__()
@@ -159,7 +134,7 @@ optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
 if __name__ == "__main__":
     model.train()
-    tot_len = 60000
+    tot_len = (len(dataset) + len(train_dataset))
     for epoch in range(num_epochs):
         i = 0
         for batch in combined_loader:
