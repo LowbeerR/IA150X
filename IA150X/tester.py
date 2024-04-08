@@ -1,4 +1,7 @@
+import os.path
+
 from pytube import YouTube
+from csv import DictWriter
 
 #appends title name to existing txt file
 def add_names_to_csv(path):
@@ -16,12 +19,18 @@ def add_names_to_csv(path):
 
 
 def download_videos(path):
+    nr = 0
     try:
         with open(path, "r") as file:
             for line in file:
-                url = line.strip().split(',')[0]
-                print(f"downloading video{url}")
-                YouTube(url).streams.first().download(output_path=out_folder)
+                nr = nr + 1
+                URL = line.strip().split(',')[0]
+                name = YouTube(URL).title + ".mp4"
+                name = name.replace("|", "").replace("?", "").replace('"', "").replace("*", "")
+                if not os.path.exists(os.path.join(out_folder, name)):
+                    YouTube(URL).streams.first().download(output_path=out_folder, filename=name)
+                data.append({'name': name, 'URL': URL, 'hidden_data': 0, 'type': line.strip().split(',')[1]})
+                print(f"Downloaded {nr} videos")
     except FileNotFoundError as e:
         print(e)
 
@@ -29,9 +38,18 @@ def download_videos(path):
 out_folder = 'evaluation_dataset'
 
 if __name__ == "__main__":
+    while True:
+        headers = None
+        data = None
         path = str(input("Enter the path to the dataset\n"))
         try:
-            #download_videos(path[1:-1])
-            add_names_to_csv(path[1:-1])
+            headers = ['name', 'URL', 'hidden_data', 'type']
+            data = []
+            download_videos(path[1:-1])
         except Exception as e:
             print(e)
+        if headers is not None and data is not None:
+            with open('eval.csv', 'w', newline='', encoding="UTF-8") as csv:
+                writer = DictWriter(csv, fieldnames=headers)
+                writer.writeheader()
+                writer.writerows(data)
