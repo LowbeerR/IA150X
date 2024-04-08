@@ -68,11 +68,9 @@ def find_box_size(imm_arr):
                     box_found_count += 1
                     # print(f"One box of size {size} found at (x,y) = ({y}, {x})")
                     if box_found_count >= threshold:
-                        print(
-                            f"Frame contains hidden data, found evidence on {box_found_count} places with size {size}")
-                        return
-        # if box_found_count < threshold:
-        # print(f"No box of size 0, 1 ... {size} found in image (No hidden data)")
+                        #print( f"Frame contains hidden data, found evidence on {box_found_count} places of size {size}")
+                        return True
+    return False
 
 
 def video_to_frames(video_path, frames_checked_count):
@@ -86,9 +84,11 @@ def video_to_frames(video_path, frames_checked_count):
     freq = total_fps // frames_checked_count
     print(total_fps)
     print(freq)
-    frames_indices = [i * freq for i in range(frames_checked_count)]
+    # +1 to avoid first frame that contains "instructions"
+    frames_indices = [1 + i * freq for i in range(frames_checked_count)]
     print(frames_indices)
     for frame_index in frames_indices:
+        # % 30000 exists duo to limitation in ffmpeg, finding a specific frame beyond 30 000 causes the program to crash
         output_file = os.path.join(temp_dir, f"frame_{frame_index % 30000}.png")
         print(output_file, frame_index)
         (
@@ -98,21 +98,29 @@ def video_to_frames(video_path, frames_checked_count):
             .output(output_file, vframes=1)
             .run()
         )
-    check_multiple_frames(temp_dir)
+    check_multiple_frames(temp_dir, frames_checked_count)
 
 
-def check_multiple_frames(folder_path):
-    print("folder path", folder_path)
+def check_multiple_frames(folder_path, frames_needed_to_contain_data):
     frame = 0
+    has_box_count = 0
     for image in os.listdir(folder_path):
+        # Sets limit on when a video is classified as hidden data
+        print(f"Checking frame {frame}/ {frames_needed_to_contain_data}")
         image_path = os.path.join(folder_path, image)
         black_white = create_black_white_picture(image_path)
         frame += 1
         print(f"{image}")
-        find_box_size(black_white)
+        if find_box_size(black_white):
+            has_box_count += 1
+        if has_box_count == frames_needed_to_contain_data:
+            print("Video contains hidden data")
 
 
 def get_total_nr_frames(file_name):
+    fps = get_fps(file_name)
+    if fps == 0:
+        raise Exception(f"Fps of video is 0, error {file_name}")
     return get_fps(file_name) * get_length(file_name)
 
 
@@ -135,9 +143,9 @@ def create_black_white_picture(image_path):
 
 if __name__ == "__main__":
     # get list of coordinates that has boxes
-    while True:
-        path = str(input("Enter the path to the video\n"))
-        try:
-            video_to_frames(path[1:-1], 10)
-        except Exception as e:
-            print(e)
+    print(os.listdir("videos"))
+    try:
+        for file in os.listdir("videos"):
+            video_to_frames("videos/" + file, 10)
+    except Exception as e:
+        print(e)
