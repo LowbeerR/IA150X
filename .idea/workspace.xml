@@ -6,7 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="b26ec0c5-d120-4498-bc2a-a0592c15150b" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IA150X/detect_box_size_from_image.py" beforeDir="false" afterPath="$PROJECT_DIR$/IA150X/detect_box_size_from_image.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IA150X/tester.py" beforeDir="false" afterPath="$PROJECT_DIR$/IA150X/tester.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IA150X/yt_urls.txt" beforeDir="false" afterPath="$PROJECT_DIR$/IA150X/yt_urls.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,24 +35,26 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Python.cnn.executor&quot;: &quot;Run&quot;,
-    &quot;Python.detect_box_size_from_image.executor&quot;: &quot;Run&quot;,
-    &quot;Python.video_download.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/User/Documents/GitHub/IA150X/IA150X/videos&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python.cnn.executor": "Run",
+    "Python.detect_box_size_from_image.executor": "Run",
+    "Python.tester.executor": "Run",
+    "Python.video_download.executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "C:/Users/User/Documents/GitHub/IA150X/IA150X",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\User\Documents\GitHub\IA150X\IA150X" />
       <recent name="C:\Users\User\Documents\GitHub\IA150X\IA150X\videos" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
@@ -59,7 +62,7 @@
       <recent name="C:\Users\User\Documents\GitHub\IA150X\IA150X" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.detect_box_size_from_image">
+  <component name="RunManager" selected="Python.tester">
     <configuration name="detect_box_size_from_image" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="IA150X" />
       <option name="ENV_FILES" value="" />
@@ -75,6 +78,29 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/IA150X/detect_box_size_from_image.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="tester" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="IA150X" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/IA150X" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/IA150X/tester.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -108,8 +134,9 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.detect_box_size_from_image" />
+        <item itemvalue="Python.tester" />
         <item itemvalue="Python.video_download" />
+        <item itemvalue="Python.detect_box_size_from_image" />
       </list>
     </recent_temporary>
   </component>
@@ -136,7 +163,7 @@
       <workItem from="1712133956213" duration="5440000" />
       <workItem from="1712216502077" duration="4924000" />
       <workItem from="1712306972075" duration="19000" />
-      <workItem from="1712563934117" duration="1429000" />
+      <workItem from="1712563934117" duration="5236000" />
     </task>
     <servers />
   </component>
@@ -146,6 +173,7 @@
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/IA150X$detect_box_size_from_image.coverage" NAME="detect_box_size_from_image Coverage Results" MODIFIED="1712564734923" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/IA150X" />
     <SUITE FILE_PATH="coverage/IA150X$cnn.coverage" NAME="cnn Coverage Results" MODIFIED="1712051430863" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/IA150X" />
-    <SUITE FILE_PATH="coverage/IA150X$video_download.coverage" NAME="video_download Coverage Results" MODIFIED="1712145943190" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/IA150X" />
+    <SUITE FILE_PATH="coverage/IA150X$tester.coverage" NAME="tester Coverage Results" MODIFIED="1712569176480" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/IA150X" />
+    <SUITE FILE_PATH="coverage/IA150X$video_download.coverage" NAME="video_download Coverage Results" MODIFIED="1712566064773" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/IA150X" />
   </component>
 </project>
