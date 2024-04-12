@@ -21,7 +21,8 @@ def bw_movie(video_filename):
         image_rbg = image.convert("RGB")
         image = np.array(image_rbg)
         frames.append(image)
-        print(f"Frame {i + 1} of {frame_amount}")
+        if (i + 1) % 60 == 0:
+            print(f"Frame {i + 1} of {frame_amount}")
     imageio.mimsave(video_filename, frames, fps=10, codec="libx264")
 
 
@@ -36,5 +37,6 @@ def rgb_movie(video_filename):
                 pixels[x, y] = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
         image = np.array(image)
         frames.append(image)
-        print(f"Frame {i + 1} of {frame_amount}")
+        if (i + 1) % 60 == 0:
+            print(f"Frame {i + 1} of {frame_amount}")
     imageio.mimsave(video_filename, frames, fps=10, codec="libx264")
