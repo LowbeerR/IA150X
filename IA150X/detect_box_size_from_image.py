@@ -1,8 +1,10 @@
+import csv
 import math
 import os
 import shutil
 import cv2
 import ffmpeg
+from pymediainfo import MediaInfo
 
 _1x1 = "frame.png"
 _2x2 = "frame3419.png"
@@ -99,7 +101,7 @@ def video_to_frames(video_path, frames_checked_count, contains_data_threshold_ra
             ffmpeg
             .input(video_path)
             .filter('select', f'eq(n,{frame_index % 30000})')  # .format(frame_index))
-            .output(output_file, vframes=1, loglevel="quiet", threads="4")
+            .output(output_file, vframes=1, loglevel="quiet")
             .run()
         )
     check_multiple_frames(temp_dir, frames_checked_count * contains_data_threshold_ratio)
@@ -119,23 +121,37 @@ def check_multiple_frames(folder_path, frames_needed_to_contain_data):
             has_box_count += 1
         if has_box_count == math.floor(frames_needed_to_contain_data):
             print("Video contains hidden data")
+        elif frame == math.floor(frames_needed_to_contain_data):
+            print("Video contains NO hidden data")
 
 
 def get_total_nr_frames(file_name):
     fps = get_fps(file_name)
     if fps == 0:
         raise Exception(f"Fps of video is 0, error {file_name}")
+    print(f"fps: {get_fps(file_name)}")
+    print(f"length: {get_length(file_name)}")
     return get_fps(file_name) * get_length(file_name)
 
 
 def get_length(file_name):
-    data = ffmpeg.probe(file_name)
-    return int(data["streams"][0]["duration"].split(".")[0])
+    duration = 0
+    media_info = MediaInfo.parse(file_name)
+    for track in media_info.tracks:
+        if track.track_type == "Video":
+            duration = track.duration
+    if duration == 0:
+        raise Exception(f"{file_name} is 0s long")
+    return math.floor(duration / 1000)  # Convert milliseconds to seconds
 
 
 def get_fps(file_name):
-    data = ffmpeg.probe(file_name)
-    return int(data["streams"][0]["r_frame_rate"].split("/")[0])
+    fps = 0
+    data = MediaInfo.parse(file_name)
+    for track in data.tracks:
+        if track.track_type == "Video":
+            fps = float(track.frame_rate)
+    return int(math.floor(fps))
 
 
 def create_black_white_picture(image_path):
@@ -145,12 +161,23 @@ def create_black_white_picture(image_path):
     return im_bw
 
 
+def test_videos_from_csv(file_csv):
+    with open(file_csv, 'r', encoding="utf-8") as csvfile:
+        path = "evaluation_dataset/"
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            name = path + row['name']
+            video_to_frames(name, 2, 1)
+
+
 if __name__ == "__main__":
     # get list of coordinates that has boxes
-    print(os.listdir("videos"))
-    try:
+    test_videos_from_csv("eval.csv")
+
+    ''' try:
         for file in os.listdir("videos"):
             # 1 = 100%, 0.5 = 50%
             video_to_frames("videos/" + file, 10, 1)
     except Exception as e:
         print(e)
+    '''
