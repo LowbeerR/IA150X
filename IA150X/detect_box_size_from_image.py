@@ -95,7 +95,7 @@ def video_to_frames(video_path, frames_checked_count):
             ffmpeg
             .input(video_path)
             .filter('select', f'eq(n,{frame_index % 30000})')  # .format(frame_index))
-            .output(output_file, vframes=1)
+            .output(output_file, vframes=1, loglevel="quiet", threads="4")
             .run()
         )
     check_multiple_frames(temp_dir, frames_checked_count)
