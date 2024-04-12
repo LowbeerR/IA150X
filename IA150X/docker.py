@@ -1,3 +1,4 @@
+import os
 import time
 import winpty
 
@@ -11,7 +12,7 @@ def run_isg(mode, path):
         "-it",
         "--rm",
         "-v",
-        "C:/Users/Rikard/Documents/GitHub/Infinite-Storage-Glitch:/home/Infinite-Storage-Glitch",
+        f"C:/Users/{os.getlogin()}/Documents/GitHub/Infinite-Storage-Glitch:/home/Infinite-Storage-Glitch",
         "isg",
         "./target/release/isg_4real"
     ]

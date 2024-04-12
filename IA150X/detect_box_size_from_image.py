@@ -1,3 +1,4 @@
+import math
 import os
 import shutil
 import cv2
@@ -68,12 +69,15 @@ def find_box_size(imm_arr):
                     box_found_count += 1
                     # print(f"One box of size {size} found at (x,y) = ({y}, {x})")
                     if box_found_count >= threshold:
-                        #print( f"Frame contains hidden data, found evidence on {box_found_count} places of size {size}")
+                        # print( f"Frame contains hidden data, found evidence on {box_found_count} places of size {size}")
                         return True
     return False
 
 
-def video_to_frames(video_path, frames_checked_count):
+def video_to_frames(video_path, frames_checked_count, contains_data_threshold_ratio):
+    if 0 >= contains_data_threshold_ratio > 1:
+        raise Exception("contains_data_threshold_procent must be between 0 and 1")
+
     temp_dir = os.path.join(os.curdir, "temp")
     try:
         os.mkdir(temp_dir)
@@ -88,7 +92,7 @@ def video_to_frames(video_path, frames_checked_count):
     frames_indices = [1 + i * freq for i in range(frames_checked_count)]
     print(frames_indices)
     for frame_index in frames_indices:
-        # % 30000 exists duo to limitation in ffmpeg, finding a specific frame beyond 30 000 causes the program to crash
+        # % 30000 exists due to limitation in ffmpeg, finding a specific frame beyond 30 000 causes the program to crash
         output_file = os.path.join(temp_dir, f"frame_{frame_index % 30000}.png")
         print(output_file, frame_index)
         (
@@ -98,7 +102,7 @@ def video_to_frames(video_path, frames_checked_count):
             .output(output_file, vframes=1, loglevel="quiet", threads="4")
             .run()
         )
-    check_multiple_frames(temp_dir, frames_checked_count)
+    check_multiple_frames(temp_dir, frames_checked_count * contains_data_threshold_ratio)
 
 
 def check_multiple_frames(folder_path, frames_needed_to_contain_data):
@@ -113,7 +117,7 @@ def check_multiple_frames(folder_path, frames_needed_to_contain_data):
         print(f"{image}")
         if find_box_size(black_white):
             has_box_count += 1
-        if has_box_count == frames_needed_to_contain_data:
+        if has_box_count == math.floor(frames_needed_to_contain_data):
             print("Video contains hidden data")
 
 
@@ -146,6 +150,7 @@ if __name__ == "__main__":
     print(os.listdir("videos"))
     try:
         for file in os.listdir("videos"):
-            video_to_frames("videos/" + file, 10)
+            # 1 = 100%, 0.5 = 50%
+            video_to_frames("videos/" + file, 10, 1)
     except Exception as e:
         print(e)
