@@ -1,10 +1,12 @@
 import os
-import torch
 import time
+from csv import reader
+
+import torch
 import torchvision
 from torchvision.transforms import v2
+
 from cnn import ConvNet
-from csv import reader
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
 model = ConvNet().to(device)
@@ -29,9 +31,13 @@ if __name__ == "__main__":
             reader = reader(csv)
             next(reader, None)
             correct = 0
-            correct_per_type = {'static_bw': {'no_hidden_data': 0, 'hidden_data': 0}, 'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0}, 'other': {'no_hidden_data': 0, 'hidden_data': 0}}
+            correct_per_type = {'static_bw': {'no_hidden_data': 0, 'hidden_data': 0},
+                                'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0},
+                                'other': {'no_hidden_data': 0, 'hidden_data': 0}}
             false = 0
-            false_per_type = {'static_bw': {'no_hidden_data': 0, 'hidden_data': 0}, 'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0}, 'other': {'no_hidden_data': 0, 'hidden_data': 0}}
+            false_per_type = {'static_bw': {'no_hidden_data': 0, 'hidden_data': 0},
+                              'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0},
+                              'other': {'no_hidden_data': 0, 'hidden_data': 0}}
             nr = 0
             print("checking videos for hidden data")
             for videos in reader:
@@ -42,7 +48,7 @@ if __name__ == "__main__":
                 hidden = 0
                 nr = nr + 1
                 n_samples = 0
-                print(f"\r{100*nr//tot_videos}%  │{'█' * nr}{'-' * (tot_videos-nr)}│", end='')
+                print(f"\r{100 * nr // tot_videos}%  │{'█' * nr}{'-' * (tot_videos - nr)}│", end='')
                 for entry in video_reader:
                     if n_samples >= 6000:
                         break
@@ -55,7 +61,7 @@ if __name__ == "__main__":
                         n_samples += 1
                         if predicted.item() == 1:
                             hidden = hidden + 1
-                if hidden/n_samples < 0.5:
+                if hidden / n_samples < 0.5:
                     if label == 0:
                         correct = correct + 1
                         correct_per_type[type]['no_hidden_data'] = correct_per_type[type]['no_hidden_data'] + 1
@@ -72,7 +78,7 @@ if __name__ == "__main__":
             print(f"\nNr of correct samples: {correct}, Number of false samples: {false}"
                   f"\nNr of correct per type: static_bw = {correct_per_type['static_bw']}, static_rgb = {correct_per_type['static_rgb']}, other = {correct_per_type['other']}"
                   f"\nNr of false per type: static_bw = {false_per_type['static_bw']}, static_rgb = {false_per_type['static_rgb']}, other = {false_per_type['other']}"
-                  f"\nTotal accuracy: {100* correct/(correct+false):.0f}%"
-                  f"\nTime elapsed: {(time.time()-time1)/60:.2f} minutes")
+                  f"\nTotal accuracy: {100 * correct / (correct + false):.0f}%"
+                  f"\nTime elapsed: {(time.time() - time1) / 60:.2f} minutes")
     except Exception as e:
         print(f"Error: {e}")
