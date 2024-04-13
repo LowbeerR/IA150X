@@ -134,14 +134,17 @@ optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
 if __name__ == "__main__":
     try:
+        print("Creating dataset")
         dataset, train_dataset, combined_loader = create_training_dataset()
     except Exception:
         print(f"Error: Make sure docker desktop is running and that it is installed in:"
               f"\n C:/Program Files/Docker/Docker/resources/bin/docker.exe also make sure that ISG is located in:"
               f"\n C:/Users/{os.getlogin()}/Documents/GitHub/Infinite-Storage-Glitch")
         exit(1)
+    print("Dataset successfully created!")
     model.train()
     tot_len = (len(dataset) + len(train_dataset))
+    print("Starting model training")
     for epoch in range(num_epochs):
         i = 0
         for batch in combined_loader:
@@ -154,8 +157,8 @@ if __name__ == "__main__":
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            if i % 2000 == 0:
-                print(f"\rLoading: {100 * i / tot_len:.0f} %", end='')
+            if i % 200 == 0:
+                print(f"\rTraining Epoch {epoch + 1}: {100 * i / tot_len:.0f} %     │{'█' * (100 * i // tot_len)}{'-' * (99-(100 * i // tot_len))}│", end='')
         print(f"\nEpoch: {epoch + 1}, Loss: {loss.item()}")
 
     torch.save(model.state_dict(), 'model.pth')
