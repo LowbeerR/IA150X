@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 
 width = 1280
-height = 700
+height = 720
 frame_amount = 600
 
 
