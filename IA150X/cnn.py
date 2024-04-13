@@ -1,12 +1,15 @@
+import shutil
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import torchvision
-import matplotlib.pyplot as plt
 import os
 import pandas as pd
 from torchvision.io import read_image
 from torchvision.transforms import v2
+from docker import run_isg
+from generate_dataset import generate_frames_multiple_videos
+import zipfile
 
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -32,8 +35,6 @@ transforms2 = v2.Compose([
     v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
-
-# Load Custom Dataset
 
 class CustomImageDataset(Dataset):
     def __init__(self, annotations_file, img_dir, transform=None, target_transform=None):
@@ -61,53 +62,52 @@ class CustomImageDataset(Dataset):
         return image, label
 
 
-# Create dataset with ISG pictures
-dataset = CustomImageDataset(annotations_file='dataset/static_dataset.csv', img_dir='dataset/data2', transform=transforms)
+def add_datasets():
+    # Create dataset with ISG pictures
+    dataset = CustomImageDataset(annotations_file='dataset/static_dataset.csv', img_dir='dataset/data2',
+                                 transform=transforms)
 
-# Add CIFAR 10
-train_dataset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transforms2)
-for i in range(len(train_dataset.targets)):
-    train_dataset.targets[i] = 0
-# Combine datasets
-combined_dataset = torch.utils.data.ConcatDataset([train_dataset, dataset])
-# Make loader for Model Training
-combined_loader = DataLoader(combined_dataset, batch_size=batch_size)
+    # Add CIFAR 10
+    train_dataset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transforms2)
+    for i in range(len(train_dataset.targets)):
+        train_dataset.targets[i] = 0
+    # Combine datasets
+    combined_dataset = torch.utils.data.ConcatDataset([train_dataset, dataset])
+    # Make loader for Model Training
+    combined_loader = DataLoader(combined_dataset, batch_size=batch_size)
 
-
-def imshow(img):
-    img = img.to(device='cpu')
-    img = img / 2 + 0.5
-    plt.imshow(img.numpy().transpose((1, 2, 0)))
-    plt.show()
+    return dataset, train_dataset, combined_loader
 
 
-# Get some random training images
-# dataiter = iter(dataset_loader)
-# images, labels = next(dataiter)
-
-# Show images
-# imshow(torchvision.utils.make_grid(images))
-
-
-def test_loop(dataloader):
-    # Set the model to evaluation mode - important for batch normalization and dropout layers
-    # Unnecessary in this situation but added for best practices
-    model.eval()
-    size = len(dataloader.dataset)
-    num_batches = len(dataloader)
-    test_loss, correct = 0, 0
-
-    # Evaluating the model with torch.no_grad() ensures that no gradients are computed during test mode
-    # also serves to reduce unnecessary gradient computations and memory usage for tensors with requires_grad=True
-    with torch.no_grad():
-        for X, y in dataloader:
-            pred = model(X)
-            test_loss += loss_fn(pred, y).item()
-            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
-
-    test_loss /= num_batches
-    correct /= size
-    print(f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
+def create_training_dataset():
+    folder_path = '..\\..\\Infinite-Storage-Glitch\\src\\tests'
+    zip_path = '..\\..\\Infinite-Storage-Glitch\\src\\tests.zip'
+    output_path = '..\\..\\Infinite-Storage-Glitch\\output.avi'
+    final_path = 'videos'
+    try:
+        if os.path.exists(zip_path):
+            os.remove(zip_path)
+        with zipfile.ZipFile(zip_path, 'w', compression=zipfile.ZIP_DEFLATED) as toZip:
+            for root, _, files in os.walk(folder_path):
+                for file in files:
+                    abspath = os.path.join(root, file)
+                    relpath = os.path.relpath(abspath, folder_path)
+                    toZip.write(abspath, relpath)
+        run_isg(0, 'src/tests.zip')
+        if os.path.exists(final_path):
+            for root, _, files in os.walk(final_path):
+                for file in files:
+                    os.remove(os.path.join(root, file))
+            os.removedirs(final_path)
+        os.mkdir(final_path)
+        shutil.move(output_path, final_path)
+        os.rename(os.path.join(final_path, 'output.avi'), os.path.join(final_path, 'output_1.avi'))
+        run_isg(1, 'src/tests.zip')
+        shutil.move(output_path, final_path)
+        generate_frames_multiple_videos('data2', 'videos')
+        return add_datasets()
+    except Exception:
+        return None
 
 
 class ConvNet(nn.Module):
@@ -133,6 +133,13 @@ loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
 if __name__ == "__main__":
+    try:
+        dataset, train_dataset, combined_loader = create_training_dataset()
+    except Exception:
+        print(f"Make sure docker desktop is running and that it is installed in path"
+              f"\n C:/Program Files/Docker/Docker/resources/bin/docker.exe and that ISG is located in path"
+              f"\n C:/Users/{os.getlogin()}/Documents/GitHub/Infinite-Storage-Glitch")
+        exit(1)
     model.train()
     tot_len = (len(dataset) + len(train_dataset))
     for epoch in range(num_epochs):
@@ -148,7 +155,7 @@ if __name__ == "__main__":
             loss.backward()
             optimizer.step()
             if i % 2000 == 0:
-                print(f"Loading: {100*i/tot_len:.0f} %")
-        print(f"Epoch: {epoch+1}, Loss: {loss.item()}")
+                print(f"\rLoading: {100 * i / tot_len:.0f} %", end='')
+        print(f"\nEpoch: {epoch + 1}, Loss: {loss.item()}")
 
     torch.save(model.state_dict(), 'model.pth')
