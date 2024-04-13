@@ -1,18 +1,14 @@
 import os
-
 import torch
 import time
-from torch.utils.data import DataLoader
 import torchvision
-import matplotlib.pyplot as plt
-from torchvision.io import read_image
 from torchvision.transforms import v2
-from cnn import ConvNet, CustomImageDataset
+from cnn import ConvNet
+from csv import reader
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
 model = ConvNet().to(device)
 model.load_state_dict(torch.load('model.pth'))
-
 
 classes = ('No hidden data', 'Hidden data')
 
@@ -24,91 +20,59 @@ transforms = v2.Compose([
 ])
 
 if __name__ == "__main__":
-    while True:
-        path = str(input("Paste the path\n"))
-        if path == "test":
-            batch_size = 32
-            testset = CustomImageDataset(annotations_file='C:/Users/Rikard/Documents/GitHub/IA150X/IA150X/dataset2/static_dataset.csv', img_dir='C:/Users/Rikard/Documents/GitHub/IA150X/IA150X/dataset2/data3', transform=transforms)
-            testset_loader = DataLoader(testset, batch_size=batch_size, shuffle=True)
-            model.eval()
-            with torch.no_grad():
-                n_correct = 0
-                n_samples = 0
+    try:
+        time1 = time.time()
+        with open("eval.csv", "r", encoding="utf-8") as csv:
+            reader1 = reader(csv)
+            tot_videos = sum(1 for _ in reader1) - 1
+        with open("eval.csv", "r", encoding="utf-8") as csv:
+            reader = reader(csv)
+            next(reader, None)
+            correct = 0
+            correct_per_type = {'static_bw': {'no_hidden_data': 0, 'hidden_data': 0}, 'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0}, 'other': {'no_hidden_data': 0, 'hidden_data': 0}}
+            false = 0
+            false_per_type = {'static_bw': {'no_hidden_data': 0, 'hidden_data': 0}, 'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0}, 'other': {'no_hidden_data': 0, 'hidden_data': 0}}
+            nr = 0
+            print("checking videos for hidden data")
+            for videos in reader:
+                name = videos[0]
+                label = int(videos[2])
+                type = videos[3].replace(" ", "")
+                video_reader = torchvision.io.VideoReader(os.path.join("evaluation_dataset", name), "video")
                 hidden = 0
-                for images, labels in testset_loader:
-                    images = images.to(device)
-                    labels = labels.to(device)
-                    outputs = model(images)
-                    # max returns (value ,index)
-                    _, predicted = torch.max(outputs, 1)
-                    n_samples += labels.size(0)
-                    n_correct += (predicted == labels).sum().item()
-                    hidden += (predicted == 1).sum().item()
-                acc = 100.0 * n_correct / n_samples
-                print(f'Accuracy of the network: {acc} %, Hidden data chance: {100*hidden/n_samples:.0f}%')
-        if path == "test2":
-            video_folder = input("Enter the evaluation dataset path \n")[1:-1]
-
-            try:
-                for videos in os.listdir(video_folder):
-                    video_reader = torchvision.io.VideoReader(os.path.join(video_folder, videos), "video")
-                    hidden = 0
-                    n_samples = 0
-                    print("checking video for hidden data")
-                    for entry in video_reader:  # video[0]:
-                        if n_samples >= 6000:
-                            break
-                        frame = entry['data']
-                        frame = transforms(frame).unsqueeze(0).to(device)
-                        model.eval()
-                        with torch.no_grad():
-                            outputs = model(frame)
-                            _, predicted = torch.max(outputs, 1)
-                            n_samples += 1
-                            if predicted == 1:
-                                hidden += 1
-                    time2 = time.time()
-                    print(
-                        f"Hidden data chance: {100 * hidden / n_samples:.0f}%, Nr_frames: {n_samples}")
-            except Exception as e:
-                print("Error")
-        else:
-            try:
-                image = read_image(path[1:-1])
-            except Exception as e:
-                # print(f"Error: {e}")
-                try:
-                    # video = read_video(path[1:-1],start_pts=0, end_pts=100, pts_unit='sec', output_format="TCHW")
-                    time1 = time.time()
-                    video_reader = torchvision.io.VideoReader(path[1:-1], "video")
-                except Exception as f:
-                    print(f"Error: {e, f}")
+                nr = nr + 1
+                n_samples = 0
+                print(f"\r{100*nr//tot_videos}%  │{'█' * nr}{'-' * (tot_videos-nr)}│", end='')
+                for entry in video_reader:
+                    if n_samples >= 6000:
+                        break
+                    frame = entry['data']
+                    frame = transforms(frame).unsqueeze(0).to(device)
+                    model.eval()
+                    with torch.no_grad():
+                        outputs = model(frame)
+                        _, predicted = torch.max(outputs, 1)
+                        n_samples += 1
+                        if predicted.item() == 1:
+                            hidden = hidden + 1
+                if hidden/n_samples < 0.8:
+                    if label == 0:
+                        correct = correct + 1
+                        correct_per_type[type]['no_hidden_data'] = correct_per_type[type]['no_hidden_data'] + 1
+                    if label == 1:
+                        false = false + 1
+                        false_per_type[type]['hidden_data'] = false_per_type[type]['hidden_data'] + 1
                 else:
-                    hidden = 0
-                    n_samples = 0
-                    print("checking video for hidden data")
-                    for entry in video_reader: # video[0]:
-                        if n_samples >= 6000:
-                            break
-                        frame = entry['data']
-                        frame = transforms(frame).unsqueeze(0).to(device)
-                        model.eval()
-                        with torch.no_grad():
-                            outputs = model(frame)
-                            _, predicted = torch.max(outputs, 1)
-                            n_samples += 1
-                            if predicted == 1:
-                                hidden += 1
-                    time2 = time.time()
-                    print(f"Hidden data chance: {100*hidden/n_samples:.0f}%, Time: {time2-time1:} Nr_frames: {n_samples}")
-            else:
-                image = transforms(image).unsqueeze(0).to(device)
-                img = torchvision.utils.make_grid(image).to('cpu')
-                plt.imshow(img.numpy().transpose((1, 2, 0)))
-                plt.show()
-                model.eval()
-                with torch.no_grad():
-                    output = model(image)
-
-                _, predicted_class = torch.max(output, 1)
-                print("Predicted Class:", classes[predicted_class.item()])
+                    if label == 0:
+                        false = false + 1
+                        false_per_type[type]['no_hidden_data'] = false_per_type[type]['no_hidden_data'] + 1
+                    if label == 1:
+                        correct = correct + 1
+                        correct_per_type[type]['hidden_data'] = correct_per_type[type]['hidden_data'] + 1
+            print(f"\nNr of correct samples: {correct}, Number of false samples: {false}"
+                  f"\nNr of correct per type: static_bw = {correct_per_type['static_bw']}, static_rgb = {correct_per_type['static_rgb']}, other = {correct_per_type['other']}"
+                  f"\nNr of false per type: static_bw = {false_per_type['static_bw']}, static_rgb = {false_per_type['static_rgb']}, other = {false_per_type['other']}"
+                  f"\nTotal accuracy: {100* correct/(correct+false):.0f}%"
+                  f"\nTime elapsed: {(time.time()-time1)/60:.2f} minutes")
+    except Exception as e:
+        print(f"Error: {e}")
