@@ -136,8 +136,8 @@ if __name__ == "__main__":
     try:
         dataset, train_dataset, combined_loader = create_training_dataset()
     except Exception:
-        print(f"Make sure docker desktop is running and that it is installed in path"
-              f"\n C:/Program Files/Docker/Docker/resources/bin/docker.exe and that ISG is located in path"
+        print(f"Error: Make sure docker desktop is running and that it is installed in:"
+              f"\n C:/Program Files/Docker/Docker/resources/bin/docker.exe also make sure that ISG is located in:"
               f"\n C:/Users/{os.getlogin()}/Documents/GitHub/Infinite-Storage-Glitch")
         exit(1)
     model.train()
