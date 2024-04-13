@@ -55,7 +55,7 @@ if __name__ == "__main__":
                         n_samples += 1
                         if predicted.item() == 1:
                             hidden = hidden + 1
-                if hidden/n_samples < 0.8:
+                if hidden/n_samples < 0.5:
                     if label == 0:
                         correct = correct + 1
                         correct_per_type[type]['no_hidden_data'] = correct_per_type[type]['no_hidden_data'] + 1
