@@ -1,14 +1,11 @@
-import csv
+from csv import reader, DictReader
 import math
 import os
 import shutil
+import time
 import cv2
 import ffmpeg
 from pymediainfo import MediaInfo
-
-_1x1 = "frame.png"
-_2x2 = "frame3419.png"
-_3x3 = "frame3419_with_3x3.png"
 
 
 def check_box_same_color(size, array, x_pos, y_pos):
@@ -22,7 +19,6 @@ def check_box_same_color(size, array, x_pos, y_pos):
     return True
 
 
-# 1x1 boxes
 def no_adjacent_pixels_same_color(size, array, x_pos, y_pos):
     if size == 0 or size >= len(array) or size >= len(array[0]):
         raise Exception("size must be larger than 0 or smaller than the list")
@@ -69,14 +65,13 @@ def find_box_size(imm_arr):
             for x in range(imm_arr.shape[1] - size + 1):
                 if no_adjacent_pixels_same_color(size, imm_arr, y, x):
                     box_found_count += 1
-                    # print(f"One box of size {size} found at (x,y) = ({y}, {x})")
                     if box_found_count >= threshold:
-                        # print( f"Frame contains hidden data, found evidence on {box_found_count} places of size {size}")
                         return True
     return False
 
 
-def video_to_frames(video_path, frames_checked_count, contains_data_threshold_ratio):
+def video_to_frames(video_data, frames_checked_count, contains_data_threshold_ratio):
+    path, type, hidden_data = video_data
     if 0 >= contains_data_threshold_ratio > 1:
         raise Exception("contains_data_threshold_procent must be between 0 and 1")
 
@@ -86,25 +81,28 @@ def video_to_frames(video_path, frames_checked_count, contains_data_threshold_ra
     except OSError:
         shutil.rmtree(temp_dir)
         os.mkdir(temp_dir)
-    total_fps = get_total_nr_frames(video_path)
+    total_fps = get_total_nr_frames(path)
     freq = total_fps // frames_checked_count
-    print(total_fps)
-    print(freq)
     # +1 to avoid first frame that contains "instructions"
-    frames_indices = [1 + i * freq for i in range(frames_checked_count)]
-    print(frames_indices)
+    frames_indices = [4 + i * freq for i in range(frames_checked_count)]
     for frame_index in frames_indices:
         # % 30000 exists due to limitation in ffmpeg, finding a specific frame beyond 30 000 causes the program to crash
         output_file = os.path.join(temp_dir, f"frame_{frame_index % 30000}.png")
-        print(output_file, frame_index)
         (
             ffmpeg
-            .input(video_path)
+            .input(path)
             .filter('select', f'eq(n,{frame_index % 30000})')  # .format(frame_index))
             .output(output_file, vframes=1, loglevel="quiet")
             .run()
         )
-    check_multiple_frames(temp_dir, frames_checked_count * contains_data_threshold_ratio)
+    prediction = check_multiple_frames(temp_dir, frames_checked_count * contains_data_threshold_ratio)
+    if prediction != -1:
+        if prediction == int(hidden_data):
+            return True
+        else:
+            return False
+    else:
+        raise Exception("Error in check_multiple_frames")
 
 
 def check_multiple_frames(folder_path, frames_needed_to_contain_data):
@@ -112,25 +110,22 @@ def check_multiple_frames(folder_path, frames_needed_to_contain_data):
     has_box_count = 0
     for image in os.listdir(folder_path):
         # Sets limit on when a video is classified as hidden data
-        print(f"Checking frame {frame}/ {frames_needed_to_contain_data}")
         image_path = os.path.join(folder_path, image)
         black_white = create_black_white_picture(image_path)
         frame += 1
-        print(f"{image}")
         if find_box_size(black_white):
             has_box_count += 1
         if has_box_count == math.floor(frames_needed_to_contain_data):
-            print("Video contains hidden data")
+            return 1
         elif frame == math.floor(frames_needed_to_contain_data):
-            print("Video contains NO hidden data")
+            return 0
+    return -1  # error
 
 
 def get_total_nr_frames(file_name):
     fps = get_fps(file_name)
     if fps == 0:
         raise Exception(f"Fps of video is 0, error {file_name}")
-    print(f"fps: {get_fps(file_name)}")
-    print(f"length: {get_length(file_name)}")
     return get_fps(file_name) * get_length(file_name)
 
 
@@ -162,22 +157,49 @@ def create_black_white_picture(image_path):
 
 
 def test_videos_from_csv(file_csv):
+    time1 = time.time()
+    with open(file_csv, "r", encoding="utf-8") as csvfile2:
+        reader1 = reader(csvfile2)
+        tot_videos = sum(1 for _ in reader1) - 1
     with open(file_csv, 'r', encoding="utf-8") as csvfile:
         path = "evaluation_dataset/"
-        reader = csv.DictReader(csvfile)
-        for row in reader:
+        reader_csv = DictReader(csvfile)
+        correct = 0
+        correct_per_type = {'static_bw': {'no_hidden_data': 0, 'hidden_data': 0},
+                            'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0},
+                            'other': {'no_hidden_data': 0, 'hidden_data': 0}}
+        false = 0
+        false_per_type = {'static_bw': {'no_hidden_data': 0, 'hidden_data': 0},
+                          'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0},
+                          'other': {'no_hidden_data': 0, 'hidden_data': 0}}
+        nr = 0
+
+        for row in reader_csv:
+            nr = nr + 1
             name = path + row['name']
-            video_to_frames(name, 2, 1)
+            type = row['type'].replace(" ", "")
+            hidden_data = int(row['hidden_data'])
+            video_info = (name, type, hidden_data)
+            print(f"\r{100 * nr // tot_videos}%  │{'█' * nr}{'-' * (tot_videos - nr)}│", end='')
+            if video_to_frames(video_info, 10, 1):
+                correct = correct + 1
+                if hidden_data == 1:
+                    correct_per_type[type]['hidden_data'] = correct_per_type[type]['hidden_data'] + 1
+                else:
+                    correct_per_type[type]["no_hidden_data"] = correct_per_type[type]["no_hidden_data"] + 1
+            else:
+                false = false + 1
+                if hidden_data == 1:
+                    false_per_type[type]['hidden_data'] = false_per_type[type]['hidden_data'] + 1
+                else:
+                    false_per_type[type]['no_hidden_data'] = false_per_type[type]['no_hidden_data'] + 1
+        print(f"\nNr of correct samples: {correct}, Number of false samples: {false}"
+              f"\nNr of correct per type: static_bw = {correct_per_type['static_bw']}, static_rgb = {correct_per_type['static_rgb']}, other = {correct_per_type['other']}"
+              f"\nNr of false per type: static_bw = {false_per_type['static_bw']}, static_rgb = {false_per_type['static_rgb']}, other = {false_per_type['other']}"
+              f"\nTotal accuracy: {100 * correct / (correct + false):.0f}%"
+              f"\nTime elapsed: {(time.time() - time1) / 60:.2f} minutes")
 
 
 if __name__ == "__main__":
     # get list of coordinates that has boxes
     test_videos_from_csv("eval.csv")
-
-    ''' try:
-        for file in os.listdir("videos"):
-            # 1 = 100%, 0.5 = 50%
-            video_to_frames("videos/" + file, 10, 1)
-    except Exception as e:
-        print(e)
-    '''
