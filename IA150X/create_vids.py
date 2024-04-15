@@ -1,8 +1,5 @@
-import random
 import imageio
 import numpy as np
-
-from PIL import Image
 
 width = 1280
 height = 720
@@ -12,14 +9,7 @@ frame_amount = 600
 def bw_movie(video_filename):
     frames = []
     for i in range(frame_amount):
-        image = Image.new("1", (width, height))
-        pixels = image.load()
-
-        for x in range(width):
-            for y in range(height):
-                pixels[x, y] = (random.randint(0, 1))
-        image_rbg = image.convert("RGB")
-        image = np.array(image_rbg)
+        image = np.random.randint(0, 2, size=(height, width, 3), dtype=np.uint8) * 255
         frames.append(image)
         if (i + 1) % 60 == 0:
             print(f"Frame {i + 1} of {frame_amount}")
@@ -29,13 +19,7 @@ def bw_movie(video_filename):
 def rgb_movie(video_filename):
     frames = []
     for i in range(frame_amount):
-        image = Image.new("RGB", (width, height))
-        pixels = image.load()
-
-        for x in range(width):
-            for y in range(height):
-                pixels[x, y] = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-        image = np.array(image)
+        image = np.random.randint(0, 256, size=(height, width, 3), dtype=np.uint8) * 255
         frames.append(image)
         if (i + 1) % 60 == 0:
             print(f"Frame {i + 1} of {frame_amount}")
