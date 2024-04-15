@@ -83,8 +83,8 @@ def video_to_frames(video_data, frames_checked_count, contains_data_threshold_ra
         os.mkdir(temp_dir)
     total_fps = get_total_nr_frames(path)
     freq = total_fps // frames_checked_count
-    # +1 to avoid first frame that contains "instructions"
-    frames_indices = [4 + i * freq for i in range(frames_checked_count)]
+    # +4 to avoid first frames that contains "instructions" for ISG
+    frames_indices = [(4 + i * freq) % total_fps for i in range(frames_checked_count)]
     for frame_index in frames_indices:
         # % 30000 exists due to limitation in ffmpeg, finding a specific frame beyond 30 000 causes the program to crash
         output_file = os.path.join(temp_dir, f"frame_{frame_index % 30000}.png")
@@ -95,7 +95,7 @@ def video_to_frames(video_data, frames_checked_count, contains_data_threshold_ra
             .output(output_file, vframes=1, loglevel="quiet")
             .run()
         )
-    prediction = check_multiple_frames(temp_dir, frames_checked_count * contains_data_threshold_ratio)
+    prediction = check_multiple_frames(temp_dir, frames_checked_count, contains_data_threshold_ratio)
     if prediction != -1:
         if prediction == int(hidden_data):
             return True
@@ -105,7 +105,8 @@ def video_to_frames(video_data, frames_checked_count, contains_data_threshold_ra
         raise Exception("Error in check_multiple_frames")
 
 
-def check_multiple_frames(folder_path, frames_needed_to_contain_data):
+def check_multiple_frames(folder_path, frames_checked_count, contains_data_threshold_ratio):
+    frames_needed_to_contain_data = math.floor(frames_checked_count * contains_data_threshold_ratio)
     frame = 0
     has_box_count = 0
     for image in os.listdir(folder_path):
@@ -115,9 +116,9 @@ def check_multiple_frames(folder_path, frames_needed_to_contain_data):
         frame += 1
         if find_box_size(black_white):
             has_box_count += 1
-        if has_box_count == math.floor(frames_needed_to_contain_data):
+        if has_box_count >= frames_needed_to_contain_data:
             return 1
-        elif frame == math.floor(frames_needed_to_contain_data):
+        if frame == frames_checked_count and has_box_count < frames_needed_to_contain_data:
             return 0
     return -1  # error
 
@@ -152,11 +153,10 @@ def get_fps(file_name):
 def create_black_white_picture(image_path):
     im_gray = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     (_, im_bw) = cv2.threshold(im_gray, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
-    cv2.imwrite(image_path, im_bw)
     return im_bw
 
 
-def test_videos_from_csv(file_csv):
+def test_videos_from_csv(file_csv, nr_of_frames_checked, data_ratio):
     time1 = time.time()
     with open(file_csv, "r", encoding="utf-8") as csvfile2:
         reader1 = reader(csvfile2)
@@ -181,7 +181,7 @@ def test_videos_from_csv(file_csv):
             hidden_data = int(row['hidden_data'])
             video_info = (name, type, hidden_data)
             print(f"\r{100 * nr // tot_videos}%  │{'█' * nr}{'-' * (tot_videos - nr)}│", end='')
-            if video_to_frames(video_info, 10, 1):
+            if video_to_frames(video_info, nr_of_frames_checked, data_ratio):
                 correct = correct + 1
                 if hidden_data == 1:
                     correct_per_type[type]['hidden_data'] = correct_per_type[type]['hidden_data'] + 1
@@ -202,4 +202,7 @@ def test_videos_from_csv(file_csv):
 
 if __name__ == "__main__":
     # get list of coordinates that has boxes
-    test_videos_from_csv("eval.csv")
+    nr_of_frames_to_be_checked = 10
+    contains_data_ratio = 0.9  # 10*0.9 = 9 frames needs to contain hidden_data to be classified as "hidden_data"
+
+    test_videos_from_csv("eval.csv", nr_of_frames_to_be_checked, contains_data_ratio)
