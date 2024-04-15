@@ -19,7 +19,7 @@ def bw_movie(video_filename):
 def rgb_movie(video_filename):
     frames = []
     for i in range(frame_amount):
-        image = np.random.randint(0, 256, size=(height, width, 3), dtype=np.uint8) * 255
+        image = np.random.randint(0, 256, size=(height, width, 3), dtype=np.uint8)
         frames.append(image)
         if (i + 1) % 60 == 0:
             print(f"Frame {i + 1} of {frame_amount}")
