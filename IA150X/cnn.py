@@ -1,15 +1,18 @@
+import os
 import shutil
+import time
+import zipfile
+
+import pandas as pd
 import torch
 import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
 import torchvision
-import os
-import pandas as pd
+from torch.utils.data import Dataset, DataLoader
 from torchvision.io import read_image
 from torchvision.transforms import v2
+
 from docker import run_isg
 from generate_dataset import generate_frames_multiple_videos
-import zipfile
 
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -85,26 +88,32 @@ def create_training_dataset():
     output_path = '..\\..\\Infinite-Storage-Glitch\\output.avi'
     final_path = 'videos'
     try:
-        if os.path.exists(zip_path):
-            os.remove(zip_path)
-        with zipfile.ZipFile(zip_path, 'w', compression=zipfile.ZIP_DEFLATED) as toZip:
-            for root, _, files in os.walk(folder_path):
-                for file in files:
-                    abspath = os.path.join(root, file)
-                    relpath = os.path.relpath(abspath, folder_path)
-                    toZip.write(abspath, relpath)
-        run_isg(0, 'src/tests.zip')
-        if os.path.exists(final_path):
-            for root, _, files in os.walk(final_path):
-                for file in files:
-                    os.remove(os.path.join(root, file))
-            os.removedirs(final_path)
-        os.mkdir(final_path)
-        shutil.move(output_path, final_path)
-        os.rename(os.path.join(final_path, 'output.avi'), os.path.join(final_path, 'output_1.avi'))
-        run_isg(1, 'src/tests.zip')
-        shutil.move(output_path, final_path)
-        generate_frames_multiple_videos('data2', 'videos')
+        if not (os.path.exists('videos/output.avi') and os.path.exists('videos/output_1.avi') and os.path.exists(
+                'videos/output_2.avi')):
+            if os.path.exists(zip_path):
+                os.remove(zip_path)
+            with zipfile.ZipFile(zip_path, 'w', compression=zipfile.ZIP_DEFLATED) as toZip:
+                for root, _, files in os.walk(folder_path):
+                    for file in files:
+                        abspath = os.path.join(root, file)
+                        relpath = os.path.relpath(abspath, folder_path)
+                        toZip.write(abspath, relpath)
+            run_isg(0, 'src/tests.zip')
+            if os.path.exists(final_path):
+                for root, _, files in os.walk(final_path):
+                    for file in files:
+                        os.remove(os.path.join(root, file))
+                os.removedirs(final_path)
+            os.mkdir(final_path)
+            shutil.move(output_path, final_path)
+            os.rename(os.path.join(final_path, 'output.avi'), os.path.join(final_path, 'output_1.avi'))
+            run_isg(1, 'src/tests.zip')
+            shutil.move(output_path, final_path)
+            os.rename(os.path.join(final_path, 'output.avi'), os.path.join(final_path, 'output_2.avi'))
+            run_isg(2, 'src/tests.zip')
+            shutil.move(output_path, final_path)
+        if not os.path.exists('dataset/data2') and not os.path.exists('dataset/static_dataset.csv'):
+            generate_frames_multiple_videos('data2', 'videos')
         return add_datasets()
     except Exception:
         return None
@@ -133,6 +142,7 @@ loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
 if __name__ == "__main__":
+    time0 = time.time()
     try:
         print("Creating dataset")
         dataset, train_dataset, combined_loader = create_training_dataset()
@@ -158,7 +168,9 @@ if __name__ == "__main__":
             loss.backward()
             optimizer.step()
             if i % 200 == 0:
-                print(f"\rTraining Epoch {epoch + 1}: {100 * i / tot_len:.0f} %     │{'█' * (100 * i // tot_len)}{'-' * (99-(100 * i // tot_len))}│", end='')
+                print(
+                    f"\rTraining Epoch {epoch + 1}: {100 * i / tot_len:.0f} %     │{'█' * (100 * i // tot_len)}{'-' * (99 - (100 * i // tot_len))}│",
+                    end='')
         print(f"\nEpoch: {epoch + 1}, Loss: {loss.item()}")
-
+    print(f"Finished model training! Time taken: {(time.time() - time0) / 60:.2f} minutes")
     torch.save(model.state_dict(), 'model.pth')
