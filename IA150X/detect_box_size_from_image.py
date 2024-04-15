@@ -57,7 +57,7 @@ def no_adjacent_pixels_same_color(size, array, x_pos, y_pos):
 
 def find_box_size(imm_arr):
     pixels = len(imm_arr[0]) * len(imm_arr)
-    size_limit = 6
+    size_limit = 4
     for size in range(1, size_limit + 1):
         box_found_count = 0
         threshold = (pixels / (size * size)) * 0.01
@@ -87,7 +87,7 @@ def video_to_frames(video_data, frames_checked_count, contains_data_threshold_ra
     frames_indices = [(4 + i * freq) % total_fps for i in range(frames_checked_count)]
     for frame_index in frames_indices:
         # % 30000 exists due to limitation in ffmpeg, finding a specific frame beyond 30 000 causes the program to crash
-        output_file = os.path.join(temp_dir, f"frame_{frame_index % 30000}.png")
+        output_file = os.path.join(temp_dir, f"frame_{frame_index}.png")
         (
             ffmpeg
             .input(path)
@@ -150,9 +150,20 @@ def get_fps(file_name):
     return int(math.floor(fps))
 
 
+def top_left_crop(img, target_width, target_height):
+    (w, h) = img.shape
+    if w < target_width:
+        target_width = w
+    if h < target_height:
+        target_height = h
+    img = img[0:target_width, 0:target_height]
+    return img
+
+
 def create_black_white_picture(image_path):
     im_gray = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    (_, im_bw) = cv2.threshold(im_gray, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+    im_gray_cropped = top_left_crop(im_gray, width_crop, height_crop)
+    (_, im_bw) = cv2.threshold(im_gray_cropped, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
     return im_bw
 
 
@@ -204,5 +215,8 @@ if __name__ == "__main__":
     # get list of coordinates that has boxes
     nr_of_frames_to_be_checked = 10
     contains_data_ratio = 0.9  # 10*0.9 = 9 frames needs to contain hidden_data to be classified as "hidden_data"
-
+    height_crop = 64
+    width_crop = 64
     test_videos_from_csv("eval.csv", nr_of_frames_to_be_checked, contains_data_ratio)
+
+
