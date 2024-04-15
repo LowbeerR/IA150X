@@ -1,6 +1,6 @@
 import os
 import time
-from csv import reader
+from csv import reader, DictReader
 
 import torch
 import torchvision
@@ -28,8 +28,7 @@ if __name__ == "__main__":
             reader1 = reader(csv)
             tot_videos = sum(1 for _ in reader1) - 1
         with open("eval.csv", "r", encoding="utf-8") as csv:
-            reader = reader(csv)
-            next(reader, None)
+            reader = DictReader(csv)
             correct = 0
             correct_per_type = {'static_bw': {'no_hidden_data': 0, 'hidden_data': 0},
                                 'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0},
@@ -40,10 +39,10 @@ if __name__ == "__main__":
                               'other': {'no_hidden_data': 0, 'hidden_data': 0}}
             nr = 0
             print("checking videos for hidden data")
-            for videos in reader:
-                name = videos[0]
-                label = int(videos[2])
-                type = videos[3].replace(" ", "")
+            for row in reader:
+                name = row['name']
+                label = int(row['hidden_data'])
+                type = row['type'].replace(" ", "")
                 video_reader = torchvision.io.VideoReader(os.path.join("evaluation_dataset", name), "video")
                 hidden = 0
                 nr = nr + 1

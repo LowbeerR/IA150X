@@ -85,7 +85,6 @@ def zip_dataset(save_location_path):
 
 
 def generate_frames_multiple_videos(save_location_path, path_to_video_folder):
-    y_or_n = "n"
     for file in os.listdir(path_to_video_folder):
         generate_frames(save_location_path, os.path.join(path_to_video_folder, file))
 
