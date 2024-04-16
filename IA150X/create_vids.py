@@ -9,7 +9,7 @@ frame_amount = 600
 def bw_movie(video_filename):
     frames = []
     for i in range(frame_amount):
-        image = np.random.randint(0, 2, size=(height, width, 3), dtype=np.uint8) * 255
+        image = np.random.randint(0, 2, size=(height, width, 1), dtype=np.uint8) * 255
         frames.append(image)
         if (i + 1) % 60 == 0:
             print(f"Frame {i + 1} of {frame_amount}")
