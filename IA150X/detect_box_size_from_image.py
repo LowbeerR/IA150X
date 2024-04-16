@@ -59,7 +59,7 @@ def find_box_size(imm_arr):
     size_limit = 4
     for size in range(1, size_limit + 1):
         box_found_count = 0
-        threshold = (pixels / (size * size)) * threshold_varible_tuning
+        threshold = (pixels / (size * size)) * threshold_variable_tuning
         for y in range(imm_arr.shape[0] - size + 1):
             for x in range(imm_arr.shape[1] - size + 1):
                 if no_adjacent_pixels_same_color(size, imm_arr, y, x):
@@ -200,6 +200,6 @@ if __name__ == "__main__":
     contains_data_ratio = 0.8  # 10*0.9 = 9 frames needs to contain hidden_data to be classified as "hidden_data"
     height_crop = 32
     width_crop = 32
-    threshold_varible_tuning = 0.03  # in find_box_size_numpy
+    threshold_variable_tuning = 0.03  # in find_box_size_numpy
 
     test_videos_from_csv("eval.csv", nr_of_frames_to_be_checked, contains_data_ratio)
