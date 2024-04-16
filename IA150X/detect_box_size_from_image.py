@@ -53,6 +53,7 @@ def no_adjacent_pixels_same_color(size, array, x_pos, y_pos):
                 return False
     return True
 
+
 @jit
 def find_box_size(imm_arr):
     pixels = len(imm_arr[0]) * len(imm_arr)
@@ -68,6 +69,7 @@ def find_box_size(imm_arr):
                         return True
     return False
 
+
 @jit
 def top_left_crop(img, target_width, target_height):
     (w, h) = img.shape
@@ -77,6 +79,7 @@ def top_left_crop(img, target_width, target_height):
         target_height = h
     img = img[0:target_width, 0:target_height]
     return img
+
 
 def test_videos_from_csv(file_csv, nr_of_frames_checked, data_ratio):
     time1 = time.time()
@@ -131,6 +134,7 @@ def black_white_conversion(image):
     img[img <= 128] = 0
     return img
 
+
 @jit
 def top_left_crop_alt(img, target_width, target_height):
     (w, h, c) = img.shape
@@ -140,6 +144,8 @@ def top_left_crop_alt(img, target_width, target_height):
         target_height = h
     img = img[0:target_width, 0:target_height]
     return img
+
+
 def detect_hidden_data_video(path, frames_checked_count, contains_data_threshold_ratio):
     container = av.open(path)
     # container.streams.video[0].thread_type = "AUTO"  # Go faster!
@@ -173,6 +179,7 @@ def detect_hidden_data_video(path, frames_checked_count, contains_data_threshold
 
     return -1  # error
 
+
 def video_to_frames(video_data, frames_checked_count, contains_data_threshold_ratio):
     path, type, hidden_data = video_data
     if 0 >= contains_data_threshold_ratio > 1:
@@ -186,10 +193,11 @@ def video_to_frames(video_data, frames_checked_count, contains_data_threshold_ra
     else:
         raise Exception(f"Error in check_multiple_frames, prediction: {prediction}")
 
+
 if __name__ == "__main__":
     # get list of coordinates that has boxes
 
-    nr_of_frames_to_be_checked = 100
+    nr_of_frames_to_be_checked = 4
     contains_data_ratio = 0.8  # 10*0.9 = 9 frames needs to contain hidden_data to be classified as "hidden_data"
     height_crop = 32
     width_crop = 32
