@@ -8,6 +8,8 @@ from numba import jit
 
 @jit
 def check_box_same_color(size, array, x_pos, y_pos):
+    if size == 0 or size >= len(array) or size >= len(array[0]):
+        raise Exception("size must be larger than 0 or smaller than the list")
     color = array[y_pos][x_pos]
 
     for y in range(y_pos, y_pos + size):
@@ -19,9 +21,6 @@ def check_box_same_color(size, array, x_pos, y_pos):
 
 @jit
 def no_adjacent_pixels_same_color(size, array, x_pos, y_pos):
-    if size == 0 or size >= len(array) or size >= len(array[0]):
-        raise Exception("size must be larger than 0 or smaller than the list")
-
     # checks that the box is of same color
     if not (check_box_same_color(size, array, x_pos, y_pos)):
         return False
