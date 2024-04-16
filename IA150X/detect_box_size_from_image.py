@@ -2,13 +2,12 @@ from csv import reader, DictReader
 import numpy as np
 import math
 import time
-from pymediainfo import MediaInfo
 import av
+from numba import jit
 
 
+@jit
 def check_box_same_color(size, array, x_pos, y_pos):
-    if x_pos + size > array.shape[1] or y_pos + size > array.shape[0]:
-        return False
     color = array[y_pos][x_pos]
 
     for y in range(y_pos, y_pos + size):
@@ -18,6 +17,7 @@ def check_box_same_color(size, array, x_pos, y_pos):
     return True
 
 
+@jit
 def no_adjacent_pixels_same_color(size, array, x_pos, y_pos):
     if size == 0 or size >= len(array) or size >= len(array[0]):
         raise Exception("size must be larger than 0 or smaller than the list")
@@ -53,7 +53,7 @@ def no_adjacent_pixels_same_color(size, array, x_pos, y_pos):
                 return False
     return True
 
-
+@jit
 def find_box_size(imm_arr):
     pixels = len(imm_arr[0]) * len(imm_arr)
     size_limit = 4
@@ -68,34 +68,7 @@ def find_box_size(imm_arr):
                         return True
     return False
 
-
-def get_total_nr_frames(file_name):
-    fps = get_fps(file_name)
-    if fps == 0:
-        raise Exception(f"Fps of video is 0, error {file_name}")
-    return get_fps(file_name) * get_length(file_name)
-
-
-def get_length(file_name):
-    duration = 0
-    media_info = MediaInfo.parse(file_name)
-    for track in media_info.tracks:
-        if track.track_type == "Video":
-            duration = track.duration
-    if duration == 0:
-        raise Exception(f"{file_name} is 0s long")
-    return math.floor(duration / 1000)  # Convert milliseconds to seconds
-
-
-def get_fps(file_name):
-    fps = 0
-    data = MediaInfo.parse(file_name)
-    for track in data.tracks:
-        if track.track_type == "Video":
-            fps = float(track.frame_rate)
-    return int(math.floor(fps))
-
-
+@jit
 def top_left_crop(img, target_width, target_height):
     (w, h) = img.shape
     if w < target_width:
@@ -104,7 +77,6 @@ def top_left_crop(img, target_width, target_height):
         target_height = h
     img = img[0:target_width, 0:target_height]
     return img
-
 
 def test_videos_from_csv(file_csv, nr_of_frames_checked, data_ratio):
     time1 = time.time()
@@ -151,7 +123,7 @@ def test_videos_from_csv(file_csv, nr_of_frames_checked, data_ratio):
               f"\nTime elapsed: {(time.time() - time1) / 60:.2f} minutes")
 
 
-# https://stackoverflow.com/questions/51285593/converting-an-image-to-grayscale-using-numpy and
+# https://stackoverflow.com/questions/51285593/converting-an-image-to-grayscale-using-numpy
 def black_white_conversion(image):
     grayValue = 0.07 * image[:, :, 2] + 0.72 * image[:, :, 1] + 0.21 * image[:, :, 0]
     img = grayValue.astype(np.uint8)
@@ -159,7 +131,7 @@ def black_white_conversion(image):
     img[img <= 128] = 0
     return img
 
-
+@jit
 def top_left_crop_alt(img, target_width, target_height):
     (w, h, c) = img.shape
     if w < target_width:
@@ -168,8 +140,6 @@ def top_left_crop_alt(img, target_width, target_height):
         target_height = h
     img = img[0:target_width, 0:target_height]
     return img
-
-
 def detect_hidden_data_video(path, frames_checked_count, contains_data_threshold_ratio):
     container = av.open(path)
     # container.streams.video[0].thread_type = "AUTO"  # Go faster!
@@ -203,7 +173,6 @@ def detect_hidden_data_video(path, frames_checked_count, contains_data_threshold
 
     return -1  # error
 
-
 def video_to_frames(video_data, frames_checked_count, contains_data_threshold_ratio):
     path, type, hidden_data = video_data
     if 0 >= contains_data_threshold_ratio > 1:
@@ -217,11 +186,10 @@ def video_to_frames(video_data, frames_checked_count, contains_data_threshold_ra
     else:
         raise Exception(f"Error in check_multiple_frames, prediction: {prediction}")
 
-
 if __name__ == "__main__":
     # get list of coordinates that has boxes
 
-    nr_of_frames_to_be_checked = 4
+    nr_of_frames_to_be_checked = 100
     contains_data_ratio = 0.8  # 10*0.9 = 9 frames needs to contain hidden_data to be classified as "hidden_data"
     height_crop = 32
     width_crop = 32
