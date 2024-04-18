@@ -116,6 +116,7 @@ def create_training_dataset():
             os.rename(os.path.join(final_path, 'output.avi'), os.path.join(final_path, 'output_2.avi'))
             run_isg(2, 'src/tests.zip')
             shutil.move(output_path, final_path)
+            generate_frames_multiple_videos('data2', 'videos')
         if not os.path.exists('dataset/data2') and not os.path.exists('dataset/static_dataset.csv'):
             generate_frames_multiple_videos('data2', 'videos')
         return add_datasets()
