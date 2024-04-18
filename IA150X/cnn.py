@@ -16,15 +16,19 @@ from generate_dataset import generate_frames_multiple_videos
 
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+if device.type == 'cuda':
+    os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'
 # Hyper-parameters
 num_epochs = 5
-batch_size = 50
+batch_size = 20
 learning_rate = 0.001
+torch.manual_seed(0)
+torch.use_deterministic_algorithms(True)
+torch.backends.cudnn.deterministic = True
 
 # Resize pictures
 transforms = v2.Compose([
-    v2.RandomResizedCrop(size=(256, 256), antialias=True),
+    v2.RandomResizedCrop(size=(144, 144), antialias=True),
     v2.RandomHorizontalFlip(p=0.5),
     v2.ToDtype(torch.float32, scale=True),
     v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
@@ -32,7 +36,7 @@ transforms = v2.Compose([
 
 transforms2 = v2.Compose([
     v2.ToImage(),
-    v2.RandomResizedCrop(size=(256, 256), antialias=True),
+    v2.RandomResizedCrop(size=(144, 144), antialias=True),
     v2.RandomHorizontalFlip(p=0.5),
     v2.ToDtype(torch.float32, scale=True),
     v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
@@ -128,7 +132,7 @@ class ConvNet(nn.Module):
             nn.Conv2d(16, 16, (3, 3)),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(1016064, 2),
+            nn.Linear(313600, 2),
         )
 
     def forward(self, x):
