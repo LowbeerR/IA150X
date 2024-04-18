@@ -62,12 +62,12 @@ if __name__ == "__main__":
         headers = ['name', 'URL', 'hidden_data', 'type']
         data = []
         download_videos(path)
-        for i in range(0, 5):
+        for i in range(0, 9):
             if not os.path.exists(os.path.join(out_folder, f"video_{i}.mp4")):
                 bw = bw_movie(os.path.join(out_folder, f"video_{i}.mp4"), seed=i)
             data.append({'name': f"video_{i}.mp4", 'URL': "NONE", 'hidden_data': 0, 'type': "static_bw"})
             print(f"Created video {i + 1}")
-        for i in range(0, 5):
+        for i in range(0, 11):
             if not os.path.exists(os.path.join(out_folder, f"rgb_video_{i}.mp4")):
                 bw = rgb_movie(os.path.join(out_folder, f"rgb_video_{i}.mp4"), seed=i)
             data.append({'name': f"rgb_video_{i}.mp4", 'URL': "NONE", 'hidden_data': 0, 'type': "static_rgb"})
