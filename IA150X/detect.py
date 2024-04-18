@@ -11,11 +11,12 @@ from cnn import ConvNet
 device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
 model = ConvNet().to(device)
 model.load_state_dict(torch.load('model.pth'))
-
+torch.use_deterministic_algorithms(True)
+torch.backends.cudnn.deterministic = True
 classes = ('No hidden data', 'Hidden data')
 
 transforms = v2.Compose([
-    v2.RandomResizedCrop(size=(256, 256)),
+    v2.RandomResizedCrop(size=(144, 144)),
     v2.RandomHorizontalFlip(p=0.5),
     v2.ToDtype(torch.float32, scale=True),
     v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
