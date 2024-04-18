@@ -6,7 +6,8 @@ height = 720
 frame_amount = 600
 
 
-def bw_movie(video_filename):
+def bw_movie(video_filename, seed):
+    np.random.seed(seed)
     frames = []
     for i in range(frame_amount):
         image = np.random.randint(0, 2, size=(height, width, 1), dtype=np.uint8) * 255
@@ -16,7 +17,8 @@ def bw_movie(video_filename):
     imageio.mimsave(video_filename, frames, fps=10, codec="libx264")
 
 
-def rgb_movie(video_filename):
+def rgb_movie(video_filename, seed):
+    np.random.seed(seed)
     frames = []
     for i in range(frame_amount):
         image = np.random.randint(0, 256, size=(height, width, 3), dtype=np.uint8)
