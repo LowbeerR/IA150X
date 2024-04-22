@@ -1,9 +1,15 @@
-from csv import reader, DictReader
-import numpy as np
 import math
 import time
+from csv import reader, DictReader
+
 import av
+import numpy as np
 from numba import jit
+
+global false_positive
+global false_negative
+global total_correct_per_frame
+global total_frames
 
 
 @jit
@@ -81,6 +87,10 @@ def top_left_crop(img, target_width, target_height):
 
 
 def test_videos_from_csv(file_csv, nr_of_frames_checked, data_ratio):
+    global false_positive
+    global false_negative
+    global total_correct_per_frame
+    global total_frames
     time1 = time.time()
     with open(file_csv, "r", encoding="utf-8") as csvfile2:
         reader1 = reader(csvfile2)
@@ -89,6 +99,10 @@ def test_videos_from_csv(file_csv, nr_of_frames_checked, data_ratio):
         path = "evaluation_dataset/"
         reader_csv = DictReader(csvfile)
         correct = 0
+        false_positive = 0
+        false_negative = 0
+        total_correct_per_frame = 0
+        total_frames = 0
         correct_per_type = {'static_bw': {'no_hidden_data': 0, 'hidden_data': 0},
                             'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0},
                             'other': {'no_hidden_data': 0, 'hidden_data': 0}}
@@ -113,12 +127,14 @@ def test_videos_from_csv(file_csv, nr_of_frames_checked, data_ratio):
                 else:
                     correct_per_type[type]["no_hidden_data"] = correct_per_type[type]["no_hidden_data"] + 1
             else:
+                print(row['name'])
                 false = false + 1
                 if hidden_data == 1:
                     false_per_type[type]['hidden_data'] = false_per_type[type]['hidden_data'] + 1
                 else:
                     false_per_type[type]['no_hidden_data'] = false_per_type[type]['no_hidden_data'] + 1
         print(f"\nNr of correct samples: {correct}, Number of false samples: {false}"
+              f"\nTotal correct frames: {total_correct_per_frame}, Number of false positives: {false_positive}, Number of false negatives: {false_negative}, Total amount of frames: {total_frames}"
               f"\nNr of correct per type: static_bw = {correct_per_type['static_bw']}, static_rgb = {correct_per_type['static_rgb']}, other = {correct_per_type['other']}"
               f"\nNr of false per type: static_bw = {false_per_type['static_bw']}, static_rgb = {false_per_type['static_rgb']}, other = {false_per_type['other']}"
               f"\nTotal accuracy: {100 * correct / (correct + false):.0f}%"
@@ -145,36 +161,50 @@ def top_left_crop_alt(img, target_width, target_height):
     return img
 
 
-def detect_hidden_data_video(path, frames_checked_count, contains_data_threshold_ratio):
+def detect_hidden_data_video(video_data, frames_checked_count, contains_data_threshold_ratio):
+    global false_positive
+    global false_negative
+    global total_correct_per_frame
+    global total_frames
+    path, type, hidden_data = video_data
     container = av.open(path)
     # container.streams.video[0].thread_type = "AUTO"  # Go faster!
 
     frames = 0
     index = 0
     has_box_count = 0
-    total_frames = container.streams.video[0].frames
-    if frames_checked_count > (total_frames - 4):
-        frames_checked_count = total_frames - 5
+    total_frames_2 = container.streams.video[0].frames
+    if frames_checked_count > total_frames_2:
+        frames_checked_count = total_frames_2
     frames_needed_to_contain_data = math.floor(frames_checked_count * contains_data_threshold_ratio)
 
     # +4 to avoid first frames that contains "instructions" for ISG
 
     for frame in container.decode(video=0):
         # Sets limit on when a video is classified as hidden data
-
-        if index > 4:
+        index += 1
+        if True:
+            total_frames += 1
             frames += 1
             imm = frame.to_ndarray(format="rgb24")
             imm = top_left_crop_alt(imm, width_crop, height_crop)
             imm = black_white_conversion(imm)
             if find_box_size(imm):
                 has_box_count += 1
-            if has_box_count >= frames_needed_to_contain_data:
+                if hidden_data == 1:
+                    total_correct_per_frame += 1
+                elif hidden_data == 0:
+                    false_positive += 1
+            else:
+                if hidden_data == 0:
+                    total_correct_per_frame += 1
+                elif hidden_data == 1:
+                    false_negative += 1
+
+            if frames == frames_checked_count and has_box_count >= frames_needed_to_contain_data:
                 return 1
             if frames == frames_checked_count and has_box_count < frames_needed_to_contain_data:
                 return 0
-        else:
-            index += 1
 
     return -1  # error
 
@@ -183,7 +213,7 @@ def video_to_frames(video_data, frames_checked_count, contains_data_threshold_ra
     path, type, hidden_data = video_data
     if 0 >= contains_data_threshold_ratio > 1:
         raise Exception("contains_data_threshold_procent must be between 0 and 1")
-    prediction = detect_hidden_data_video(path, frames_checked_count, contains_data_threshold_ratio)
+    prediction = detect_hidden_data_video(video_data, frames_checked_count, contains_data_threshold_ratio)
     if prediction != -1:
         if prediction == int(hidden_data):
             return True
@@ -196,8 +226,8 @@ def video_to_frames(video_data, frames_checked_count, contains_data_threshold_ra
 if __name__ == "__main__":
     # get list of coordinates that has boxes
 
-    nr_of_frames_to_be_checked = 4
-    contains_data_ratio = 0.8  # 10*0.9 = 9 frames needs to contain hidden_data to be classified as "hidden_data"
+    nr_of_frames_to_be_checked = 6000
+    contains_data_ratio = 0.9  # 10*0.9 = 9 frames needs to contain hidden_data to be classified as "hidden_data"
     height_crop = 32
     width_crop = 32
     threshold_variable_tuning = 0.03  # in find_box_size_numpy
