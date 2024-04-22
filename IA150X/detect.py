@@ -31,6 +31,10 @@ if __name__ == "__main__":
         with open("eval.csv", "r", encoding="utf-8") as csv:
             reader = DictReader(csv)
             correct = 0
+            false_positive = 0
+            false_negative = 0
+            total_correct_per_frame = 0
+            total_frames = 0
             correct_per_type = {'static_bw': {'no_hidden_data': 0, 'hidden_data': 0},
                                 'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0},
                                 'other': {'no_hidden_data': 0, 'hidden_data': 0}}
@@ -61,6 +65,16 @@ if __name__ == "__main__":
                         n_samples += 1
                         if predicted.item() == 1:
                             hidden = hidden + 1
+                            if label == 1:
+                                total_correct_per_frame += 1
+                            else:
+                                false_positive += 1
+                        elif predicted.item() == 0:
+                            if label == 0:
+                                total_correct_per_frame += 1
+                            else:
+                                false_negative += 1
+                    total_frames += 1
                 if hidden / n_samples < 0.9:
                     if label == 0:
                         correct = correct + 1
@@ -76,6 +90,7 @@ if __name__ == "__main__":
                         correct = correct + 1
                         correct_per_type[type]['hidden_data'] = correct_per_type[type]['hidden_data'] + 1
             print(f"\nNr of correct samples: {correct}, Number of false samples: {false}"
+                  f"\nTotal correct frames: {total_correct_per_frame}, Number of false positives: {false_positive}, Number of false negatives: {false_negative}, Total amount of frames: {total_frames}"
                   f"\nNr of correct per type: static_bw = {correct_per_type['static_bw']}, static_rgb = {correct_per_type['static_rgb']}, other = {correct_per_type['other']}"
                   f"\nNr of false per type: static_bw = {false_per_type['static_bw']}, static_rgb = {false_per_type['static_rgb']}, other = {false_per_type['other']}"
                   f"\nTotal accuracy: {100 * correct / (correct + false):.0f}%"
