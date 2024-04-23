@@ -11,6 +11,16 @@ global false_negative
 global total_correct_per_frame
 global total_frames
 
+global static_bw_video_correct
+global static_rgb_video_correct
+global other_video_correct
+global other_video_incorrect
+global static_bw_video_wrong
+global static_rgb_video_wrong
+
+global local_correct
+global local_incorrect
+
 
 @jit
 def check_box_same_color(size, array, x_pos, y_pos):
@@ -91,6 +101,17 @@ def test_videos_from_csv(file_csv, nr_of_frames_checked, data_ratio):
     global false_negative
     global total_correct_per_frame
     global total_frames
+
+    global static_bw_video_correct
+    global static_rgb_video_correct
+    global other_video_correct
+    global other_video_incorrect
+    global static_bw_video_wrong
+    global static_rgb_video_wrong
+
+    global local_correct
+    global local_incorrect
+
     time1 = time.time()
     with open(file_csv, "r", encoding="utf-8") as csvfile2:
         reader1 = reader(csvfile2)
@@ -103,6 +124,14 @@ def test_videos_from_csv(file_csv, nr_of_frames_checked, data_ratio):
         false_negative = 0
         total_correct_per_frame = 0
         total_frames = 0
+
+        static_bw_video_correct = []
+        static_rgb_video_correct = []
+        other_video_correct = []
+        static_bw_video_wrong = []
+        static_rgb_video_wrong = []
+        other_video_wrong = []
+
         correct_per_type = {'static_bw': {'no_hidden_data': 0, 'hidden_data': 0},
                             'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0},
                             'other': {'no_hidden_data': 0, 'hidden_data': 0}}
@@ -111,7 +140,9 @@ def test_videos_from_csv(file_csv, nr_of_frames_checked, data_ratio):
                           'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0},
                           'other': {'no_hidden_data': 0, 'hidden_data': 0}}
         nr = 0
-
+        other = 1
+        bw = 1
+        rgb = 1
         for row in reader_csv:
             nr = nr + 1
             name = path + row['name']
@@ -124,6 +155,7 @@ def test_videos_from_csv(file_csv, nr_of_frames_checked, data_ratio):
                 correct = correct + 1
                 if hidden_data == 1:
                     correct_per_type[type]['hidden_data'] = correct_per_type[type]['hidden_data'] + 1
+
                 else:
                     correct_per_type[type]["no_hidden_data"] = correct_per_type[type]["no_hidden_data"] + 1
             else:
@@ -131,14 +163,40 @@ def test_videos_from_csv(file_csv, nr_of_frames_checked, data_ratio):
                 false = false + 1
                 if hidden_data == 1:
                     false_per_type[type]['hidden_data'] = false_per_type[type]['hidden_data'] + 1
+                    local_correct += 1
                 else:
                     false_per_type[type]['no_hidden_data'] = false_per_type[type]['no_hidden_data'] + 1
+                    local_incorrect += 1
+            if type == 'other':
+                other_video_correct.append(f'({other},{local_correct})')
+                other_video_wrong.append(f'({other},{local_incorrect})')
+                other += 1
+                local_correct = 0
+                local_incorrect = 0
+            elif type == 'static_bw':
+                static_bw_video_correct.append(f'({bw},{local_correct})')
+                static_bw_video_wrong.append(f'({bw},{local_incorrect})')
+                bw += 1
+                local_correct = 0
+                local_incorrect = 0
+            elif type == 'static_rgb':
+                static_rgb_video_correct.append(f'({rgb},{local_correct})')
+                static_rgb_video_wrong.append(f'({rgb},{local_incorrect})')
+                rgb += 1
+                local_correct = 0
+                local_incorrect = 0
         print(f"\nNr of correct samples: {correct}, Number of false samples: {false}"
               f"\nTotal correct frames: {total_correct_per_frame}, Number of false positives: {false_positive}, Number of false negatives: {false_negative}, Total amount of frames: {total_frames}"
               f"\nNr of correct per type: static_bw = {correct_per_type['static_bw']}, static_rgb = {correct_per_type['static_rgb']}, other = {correct_per_type['other']}"
               f"\nNr of false per type: static_bw = {false_per_type['static_bw']}, static_rgb = {false_per_type['static_rgb']}, other = {false_per_type['other']}"
               f"\nTotal accuracy: {100 * correct / (correct + false):.0f}%"
-              f"\nTime elapsed: {(time.time() - time1) / 60:.2f} minutes")
+              f"\nTime elapsed: {(time.time() - time1) / 60:.2f} minutes"
+              f"\nOther correct per video: {other_video_correct}"
+              f"\nOther wrong per video: {other_video_wrong}"
+              f"\nBW correct per video: {static_bw_video_correct}"
+              f"\nBW wrong per video: {static_bw_video_wrong}"
+              f"\nRGB correct per video: {static_rgb_video_correct}"
+              f"\nRGB wrong per video: {static_rgb_video_wrong}")
 
 
 # https://stackoverflow.com/questions/51285593/converting-an-image-to-grayscale-using-numpy
@@ -166,9 +224,16 @@ def detect_hidden_data_video(video_data, frames_checked_count, contains_data_thr
     global false_negative
     global total_correct_per_frame
     global total_frames
+
+    global local_correct
+    global local_incorrect
+
+    local_correct = 0
+    local_incorrect = 0
+
     path, type, hidden_data = video_data
     container = av.open(path)
-    # container.streams.video[0].thread_type = "AUTO"  # Go faster!
+    container.streams.video[0].thread_type = "AUTO"  # Go faster!
 
     frames = 0
     index = 0
@@ -177,8 +242,6 @@ def detect_hidden_data_video(video_data, frames_checked_count, contains_data_thr
     if frames_checked_count > total_frames_2:
         frames_checked_count = total_frames_2
     frames_needed_to_contain_data = math.floor(frames_checked_count * contains_data_threshold_ratio)
-
-    # +4 to avoid first frames that contains "instructions" for ISG
 
     for frame in container.decode(video=0):
         # Sets limit on when a video is classified as hidden data
@@ -193,13 +256,17 @@ def detect_hidden_data_video(video_data, frames_checked_count, contains_data_thr
                 has_box_count += 1
                 if hidden_data == 1:
                     total_correct_per_frame += 1
+                    local_correct += 1
                 elif hidden_data == 0:
                     false_positive += 1
+                    local_incorrect += 1
             else:
                 if hidden_data == 0:
                     total_correct_per_frame += 1
+                    local_correct += 1
                 elif hidden_data == 1:
                     false_negative += 1
+                    local_incorrect += 1
 
             if frames == frames_checked_count and has_box_count >= frames_needed_to_contain_data:
                 return 1
