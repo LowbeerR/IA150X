@@ -20,7 +20,8 @@ def download_videos(pth):
                 name = YouTube(URL).title + ".mp4"
                 name = name.replace("|", "").replace("?", "").replace('"', "").replace("*", "").replace(",", "")
                 if not os.path.exists(os.path.join(out_folder, name)):
-                    YouTube(URL).streams.first().download(output_path=out_folder, filename=name)
+                    # YouTube(URL).streams.first().download(output_path=out_folder, filename=name)
+                    YouTube(URL).streams.get_highest_resolution().download(output_path=out_folder, filename=name)
                 data.append({'name': name, 'URL': URL, 'hidden_data': 0, 'type': line.strip().split(',')[1]})
                 print(f"Downloaded {nr} videos")
     except FileNotFoundError as e:
