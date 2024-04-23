@@ -142,7 +142,9 @@ if __name__ == "__main__":
             false_positive = sum(result[3] for result in results)
             false_negative = sum(result[4] for result in results)
             total_frames = sum(result[5] for result in results)
-
+            incr = 1
+            incr2 = 1
+            incr3 = 1
             for result in results:
                 for outer_key, inner_key in result[6].items():
                     for inner_key, value in inner_key.items():
@@ -150,12 +152,19 @@ if __name__ == "__main__":
                 for outer_key, inner_key in result[7].items():
                     for inner_key, value in inner_key.items():
                         false_per_type[outer_key][inner_key] += value
-                other_video_correct.extend(result[8])
-                other_video_wrong.extend(result[9])
-                static_bw_video_correct.extend(result[10])
-                static_bw_video_wrong.extend(result[11])
-                static_rgb_video_correct.extend(result[12])
-                static_rgb_video_wrong.extend(result[13])
+                if len(result[8]) != 0:
+                    other_video_correct.append(f'({incr}, {result[8][0]})')
+                    other_video_wrong.append(f'({incr}, {result[9][0]})')
+                    incr += 1
+                if len(result[10]) != 0:
+                    static_bw_video_correct.append(f'({incr2}, {result[10][0]})')
+                    static_bw_video_wrong.append(f'({incr2}, {result[11][0]})')
+                    incr2 += 1
+                if len(result[12]) != 0:
+                    static_rgb_video_correct.append(f'({incr3}, {result[12][0]})')
+                    static_rgb_video_wrong.append(f'({incr3}, {result[13][0]})')
+                    incr3 += 1
+
             print(f"\nNr of correct samples: {correct}, Number of false samples: {false}"
                   f"\nTotal correct frames: {total_correct_per_frame}, Number of false positives: {false_positive}, Number of false negatives: {false_negative}, Total amount of frames: {total_frames}"
                   f"\nNr of correct per type: static_bw = {correct_per_type['static_bw']}, static_rgb = {correct_per_type['static_rgb']}, other = {correct_per_type['other']}"
