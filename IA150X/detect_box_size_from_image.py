@@ -5,7 +5,6 @@ from csv import reader, DictReader
 import av
 import numpy as np
 from numba import jit
-from numba import prange
 
 global false_positive
 global false_negative
@@ -29,8 +28,8 @@ def check_box_same_color(size, array, x_pos, y_pos):
         raise Exception("size must be larger than 0 or smaller than the list")
     color = array[y_pos][x_pos]
 
-    for y in prange(y_pos, y_pos + size):
-        for x in prange(x_pos, x_pos + size):
+    for y in range(y_pos, y_pos + size):
+        for x in range(x_pos, x_pos + size):
             if array[y][x] != color:
                 return False
     return True
@@ -44,25 +43,25 @@ def no_adjacent_pixels_same_color(size, array, x_pos, y_pos):
 
     color = array[y_pos][x_pos]
     # up
-    for x in prange(x_pos, x_pos + size):
+    for x in range(x_pos, x_pos + size):
         new_y_pos = y_pos - 1
         if 0 <= new_y_pos <= len(array):
             if array[new_y_pos][x] == color:
                 return False
     # down
-    for x in prange(x_pos, x_pos + size):
+    for x in range(x_pos, x_pos + size):
         new_y_pos = y_pos + size
         if new_y_pos < len(array):
             if array[new_y_pos][x] == color:
                 return False
     # left
-    for y in prange(y_pos, y_pos + size):
+    for y in range(y_pos, y_pos + size):
         new_x_pos = x_pos - 1
         if 0 <= new_x_pos <= len(array[0]):
             if array[y][new_x_pos] == color:
                 return False
     # right
-    for y in prange(y_pos, y_pos + size):
+    for y in range(y_pos, y_pos + size):
         new_x_pos = x_pos + size
         if new_x_pos < len(array[0]):
             if array[y][new_x_pos] == color:
@@ -74,11 +73,11 @@ def no_adjacent_pixels_same_color(size, array, x_pos, y_pos):
 def find_box_size(imm_arr):
     pixels = len(imm_arr[0]) * len(imm_arr)
     size_limit = 4
-    for size in prange(1, size_limit + 1):
+    for size in range(1, size_limit + 1):
         box_found_count = 0
         threshold = (pixels / (size * size)) * threshold_variable_tuning
-        for y in prange(imm_arr.shape[0] - size + 1):
-            for x in prange(imm_arr.shape[1] - size + 1):
+        for y in range(imm_arr.shape[0] - size + 1):
+            for x in range(imm_arr.shape[1] - size + 1):
                 if no_adjacent_pixels_same_color(size, imm_arr, y, x):
                     box_found_count += 1
                     if box_found_count >= threshold:
