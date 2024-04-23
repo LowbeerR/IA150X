@@ -50,9 +50,9 @@ if __name__ == "__main__":
                               'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0},
                               'other': {'no_hidden_data': 0, 'hidden_data': 0}}
             nr = 0
-            other = 0
-            bw = 0
-            rgb = 0
+            other = 1
+            bw = 1
+            rgb = 1
             print("checking videos for hidden data")
             for row in reader:
                 name = row['name']
@@ -106,16 +106,16 @@ if __name__ == "__main__":
                         correct = correct + 1
                         correct_per_type[type]['hidden_data'] = correct_per_type[type]['hidden_data'] + 1
                 if type == 'other':
-                    other_video_correct.append(local_correct)
-                    other_video_wrong.append(local_incorrect)
+                    other_video_correct.append(f'({other},{local_correct})')
+                    other_video_wrong.append(f'({other},{local_incorrect})')
                     other += 1
                 elif type == 'static_bw':
-                    static_bw_video_correct.append(local_correct)
-                    static_bw_video_wrong.append(local_incorrect)
+                    static_bw_video_correct.append(f'({bw},{local_correct})')
+                    static_bw_video_wrong.append(f'({bw},{local_incorrect})')
                     bw += 1
                 elif type == 'static_rgb':
-                    static_rgb_video_correct.append(local_correct)
-                    static_rgb_video_wrong.append(local_incorrect)
+                    static_rgb_video_correct.append(f'({rgb},{local_correct})')
+                    static_rgb_video_wrong.append(f'({rgb},{local_incorrect})')
                     rgb += 1
 
             print(f"\nNr of correct samples: {correct}, Number of false samples: {false}"
