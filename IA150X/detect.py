@@ -3,6 +3,7 @@ import time
 from csv import reader, DictReader
 
 import torch
+import torch.multiprocessing as mp
 import torchvision
 from torchvision.transforms import v2
 
@@ -22,6 +23,93 @@ transforms = v2.Compose([
     v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
+
+def check_video(row):
+    correct = 0
+    false_positive = 0
+    false_negative = 0
+    total_correct_per_frame = 0
+    total_frames = 0
+
+    static_bw_video_correct = []
+    static_rgb_video_correct = []
+    other_video_correct = []
+    static_bw_video_wrong = []
+    static_rgb_video_wrong = []
+    other_video_wrong = []
+    correct_per_type = {'static_bw': {'no_hidden_data': 0, 'hidden_data': 0},
+                        'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0},
+                        'other': {'no_hidden_data': 0, 'hidden_data': 0}}
+    false = 0
+    false_per_type = {'static_bw': {'no_hidden_data': 0, 'hidden_data': 0},
+                      'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0},
+                      'other': {'no_hidden_data': 0, 'hidden_data': 0}}
+    nr = 0
+    name = row['name']
+    label = int(row['hidden_data'])
+    type = row['type'].replace(" ", "")
+    video_reader = torchvision.io.VideoReader(os.path.join("evaluation_dataset", name), "video")
+    hidden = 0
+    local_correct = 0
+    local_incorrect = 0
+    nr = nr + 1
+    n_samples = 0
+    # print(f"\r{100 * nr // tot_videos}%  │{'█' * nr}{'-' * (tot_videos - nr)}│", end='')
+    for entry in video_reader:
+        if n_samples >= 6000:
+            break
+        frame = entry['data']
+        frame = transforms(frame).unsqueeze(0).to(device)
+        model.eval()
+        with torch.no_grad():
+            outputs = model(frame)
+            _, predicted = torch.max(outputs, 1)
+            n_samples += 1
+            if predicted.item() == 1:
+                hidden = hidden + 1
+                if label == 1:
+                    total_correct_per_frame += 1
+                    local_correct += 1
+                else:
+                    false_positive += 1
+                    local_incorrect += 1
+            elif predicted.item() == 0:
+                if label == 0:
+                    total_correct_per_frame += 1
+                    local_correct += 1
+                else:
+                    false_negative += 1
+                    local_incorrect += 1
+        total_frames += 1
+    if hidden / n_samples < 0.9:
+        if label == 0:
+            correct = correct + 1
+            correct_per_type[type]['no_hidden_data'] = correct_per_type[type]['no_hidden_data'] + 1
+        if label == 1:
+            false = false + 1
+            false_per_type[type]['hidden_data'] = false_per_type[type]['hidden_data'] + 1
+    else:
+        if label == 0:
+            false = false + 1
+            false_per_type[type]['no_hidden_data'] = false_per_type[type]['no_hidden_data'] + 1
+        if label == 1:
+            correct = correct + 1
+            correct_per_type[type]['hidden_data'] = correct_per_type[type]['hidden_data'] + 1
+    if type == 'other':
+        other_video_correct.append(local_correct)
+        other_video_wrong.append(local_incorrect)
+
+    elif type == 'static_bw':
+        static_bw_video_correct.append(local_correct)
+        static_bw_video_wrong.append(local_incorrect)
+
+    elif type == 'static_rgb':
+        static_rgb_video_correct.append(local_correct)
+        static_rgb_video_wrong.append(local_incorrect)
+
+    return correct, false, total_correct_per_frame, false_positive, false_negative, total_frames, correct_per_type, false_per_type, other_video_correct, other_video_wrong, static_bw_video_correct, static_bw_video_wrong, static_rgb_video_correct, static_rgb_video_wrong
+
+
 if __name__ == "__main__":
     try:
         time1 = time.time()
@@ -30,94 +118,44 @@ if __name__ == "__main__":
             tot_videos = sum(1 for _ in reader1) - 1
         with open("eval.csv", "r", encoding="utf-8") as csv:
             reader = DictReader(csv)
-            correct = 0
-            false_positive = 0
-            false_negative = 0
-            total_correct_per_frame = 0
-            total_frames = 0
-
+            rows = list(reader)  # Load all rows
+            correct_per_type = {'static_bw': {'no_hidden_data': 0, 'hidden_data': 0},
+                                'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0},
+                                'other': {'no_hidden_data': 0, 'hidden_data': 0}}
+            false_per_type = {'static_bw': {'no_hidden_data': 0, 'hidden_data': 0},
+                              'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0},
+                              'other': {'no_hidden_data': 0, 'hidden_data': 0}}
             static_bw_video_correct = []
             static_rgb_video_correct = []
             other_video_correct = []
             static_bw_video_wrong = []
             static_rgb_video_wrong = []
             other_video_wrong = []
-            correct_per_type = {'static_bw': {'no_hidden_data': 0, 'hidden_data': 0},
-                                'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0},
-                                'other': {'no_hidden_data': 0, 'hidden_data': 0}}
-            false = 0
-            false_per_type = {'static_bw': {'no_hidden_data': 0, 'hidden_data': 0},
-                              'static_rgb': {'no_hidden_data': 0, 'hidden_data': 0},
-                              'other': {'no_hidden_data': 0, 'hidden_data': 0}}
-            nr = 0
-            other = 1
-            bw = 1
-            rgb = 1
-            print("checking videos for hidden data")
-            for row in reader:
-                name = row['name']
-                label = int(row['hidden_data'])
-                type = row['type'].replace(" ", "")
-                video_reader = torchvision.io.VideoReader(os.path.join("evaluation_dataset", name), "video")
-                hidden = 0
-                local_correct = 0
-                local_incorrect = 0
-                nr = nr + 1
-                n_samples = 0
-                print(f"\r{100 * nr // tot_videos}%  │{'█' * nr}{'-' * (tot_videos - nr)}│", end='')
-                for entry in video_reader:
-                    if n_samples >= 6000:
-                        break
-                    frame = entry['data']
-                    frame = transforms(frame).unsqueeze(0).to(device)
-                    model.eval()
-                    with torch.no_grad():
-                        outputs = model(frame)
-                        _, predicted = torch.max(outputs, 1)
-                        n_samples += 1
-                        if predicted.item() == 1:
-                            hidden = hidden + 1
-                            if label == 1:
-                                total_correct_per_frame += 1
-                                local_correct += 1
-                            else:
-                                false_positive += 1
-                                local_incorrect += 1
-                        elif predicted.item() == 0:
-                            if label == 0:
-                                total_correct_per_frame += 1
-                                local_correct += 1
-                            else:
-                                false_negative += 1
-                                local_incorrect += 1
-                    total_frames += 1
-                if hidden / n_samples < 0.9:
-                    if label == 0:
-                        correct = correct + 1
-                        correct_per_type[type]['no_hidden_data'] = correct_per_type[type]['no_hidden_data'] + 1
-                    if label == 1:
-                        false = false + 1
-                        false_per_type[type]['hidden_data'] = false_per_type[type]['hidden_data'] + 1
-                else:
-                    if label == 0:
-                        false = false + 1
-                        false_per_type[type]['no_hidden_data'] = false_per_type[type]['no_hidden_data'] + 1
-                    if label == 1:
-                        correct = correct + 1
-                        correct_per_type[type]['hidden_data'] = correct_per_type[type]['hidden_data'] + 1
-                if type == 'other':
-                    other_video_correct.append(f'({other},{local_correct})')
-                    other_video_wrong.append(f'({other},{local_incorrect})')
-                    other += 1
-                elif type == 'static_bw':
-                    static_bw_video_correct.append(f'({bw},{local_correct})')
-                    static_bw_video_wrong.append(f'({bw},{local_incorrect})')
-                    bw += 1
-                elif type == 'static_rgb':
-                    static_rgb_video_correct.append(f'({rgb},{local_correct})')
-                    static_rgb_video_wrong.append(f'({rgb},{local_incorrect})')
-                    rgb += 1
+            num_workers = 15
+            with mp.Pool(processes=num_workers) as pool:
+                results = pool.map(check_video, rows)
 
+            # Sum correct and false counts
+            correct = sum(result[0] for result in results)
+            false = sum(result[1] for result in results)
+            total_correct_per_frame = sum(result[2] for result in results)
+            false_positive = sum(result[3] for result in results)
+            false_negative = sum(result[4] for result in results)
+            total_frames = sum(result[5] for result in results)
+
+            for result in results:
+                for outer_key, inner_key in result[6].items():
+                    for inner_key, value in inner_key.items():
+                        correct_per_type[outer_key][inner_key] += value
+                for outer_key, inner_key in result[7].items():
+                    for inner_key, value in inner_key.items():
+                        false_per_type[outer_key][inner_key] += value
+                other_video_correct.extend(result[8])
+                other_video_wrong.extend(result[9])
+                static_bw_video_correct.extend(result[10])
+                static_bw_video_wrong.extend(result[11])
+                static_rgb_video_correct.extend(result[12])
+                static_rgb_video_wrong.extend(result[13])
             print(f"\nNr of correct samples: {correct}, Number of false samples: {false}"
                   f"\nTotal correct frames: {total_correct_per_frame}, Number of false positives: {false_positive}, Number of false negatives: {false_negative}, Total amount of frames: {total_frames}"
                   f"\nNr of correct per type: static_bw = {correct_per_type['static_bw']}, static_rgb = {correct_per_type['static_rgb']}, other = {correct_per_type['other']}"
