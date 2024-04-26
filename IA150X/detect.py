@@ -164,7 +164,12 @@ if __name__ == "__main__":
                     static_rgb_video_correct.append(f'({incr3}, {result[12][0]})')
                     static_rgb_video_wrong.append(f'({incr3}, {result[13][0]})')
                     incr3 += 1
-
+            oth_pos = sum(eval(t)[1] for t in other_video_correct)
+            acc_other = 100 * oth_pos / (sum(eval(t)[1] for t in other_video_wrong) + oth_pos)
+            bw_pos = sum(eval(t)[1] for t in static_bw_video_correct)
+            acc_bw = 100 * bw_pos / (sum(eval(t)[1] for t in static_bw_video_wrong) + bw_pos)
+            rgb_pos = sum(eval(t)[1] for t in static_rgb_video_correct)
+            acc_rgb = 100 * rgb_pos / (sum(eval(t)[1] for t in static_rgb_video_wrong) + rgb_pos)
             print(f"\nNr of correct samples: {correct}, Number of false samples: {false}"
                   f"\nTotal correct frames: {total_correct_per_frame}, Number of false positives: {false_positive}, Number of false negatives: {false_negative}, Total amount of frames: {total_frames}"
                   f"\nNr of correct per type: static_bw = {correct_per_type['static_bw']}, static_rgb = {correct_per_type['static_rgb']}, other = {correct_per_type['other']}"
@@ -177,6 +182,7 @@ if __name__ == "__main__":
                   f"\nBW wrong per video: {static_bw_video_wrong}"
                   f"\nRGB correct per video: {static_rgb_video_correct}"
                   f"\nRGB wrong per video: {static_rgb_video_wrong}"
+                  f"\nFrame Accuracy, Other: {acc_other:.0f} %, BW: {acc_bw:.0f} %, RGB: {acc_rgb:.0f} %"
                   )
 
     except Exception as e:
