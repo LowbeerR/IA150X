@@ -128,12 +128,19 @@ class ConvNet(nn.Module):
     def __init__(self):
         super(ConvNet, self).__init__()
         self.model = nn.Sequential(
+            # Convolution layer 1
             nn.Conv2d(3, 16, (3, 3)),
             nn.ReLU(),
+            # Pooling layer 1
+            nn.MaxPool2d(2, 2),
+            # Convolution layer 2
             nn.Conv2d(16, 16, (3, 3)),
             nn.ReLU(),
+            # Pooling layer 2
+            nn.MaxPool2d(2, 2),
+            # Fully connected layer
             nn.Flatten(),
-            nn.Linear(313600, 2),
+            nn.Linear(18496, 2),
         )
 
     def forward(self, x):
