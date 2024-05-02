@@ -27,4 +27,3 @@ https://www.youtube.com/watch?v=yweBiea1QWo, static_bw
 https://youtu.be/N0OPOsN3kA8?list=PLVdLN4Yhy71d3Nr3XXQYPsIN8m4vIej7F, static_rgb
 https://youtu.be/2sr12jmoZv0?list=PLVdLN4Yhy71d3Nr3XXQYPsIN8m4vIej7F, static_bw
 https://youtu.be/SmFWonAZGVQ?si=veYaXC45gIuL1_SX, static_bw
-https://youtu.be/p1qlaFdKHS4?list=PLVdLN4Yhy71d3Nr3XXQYPsIN8m4vIej7F, static_rgb
