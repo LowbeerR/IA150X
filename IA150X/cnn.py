@@ -129,18 +129,18 @@ class ConvNet(nn.Module):
         super(ConvNet, self).__init__()
         self.model = nn.Sequential(
             # Convolution layer 1
-            nn.Conv2d(3, 16, (3, 3)),
+            nn.Conv2d(in_channels=3, out_channels=16, kernel_size=(3, 3)),
             nn.ReLU(),
             # Pooling layer 1
-            nn.MaxPool2d(2, 2),
+            nn.MaxPool2d(kernel_size=2, stride=2),
             # Convolution layer 2
-            nn.Conv2d(16, 16, (3, 3)),
+            nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(3, 3)),
             nn.ReLU(),
             # Pooling layer 2
-            nn.MaxPool2d(2, 2),
+            nn.MaxPool2d(kernel_size=2, stride=2),
             # Fully connected layer
             nn.Flatten(),
-            nn.Linear(18496, 2),
+            nn.Linear(in_features=18496, out_features=2),
         )
 
     def forward(self, x):
