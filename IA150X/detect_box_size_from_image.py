@@ -112,7 +112,6 @@ def test_videos_from_csv(file_csv, nr_of_frames_checked, data_ratio):
     global local_correct
     global local_incorrect
 
-    time1 = time.time()
     with open(file_csv, "r", encoding="utf-8") as csvfile2:
         reader1 = reader(csvfile2)
         tot_videos = sum(1 for _ in reader1) - 1
@@ -299,7 +298,7 @@ def video_to_frames(video_data, frames_checked_count, contains_data_threshold_ra
 
 if __name__ == "__main__":
     # get list of coordinates that has boxes
-
+    time1 = time.time()
     nr_of_frames_to_be_checked = 6000
     contains_data_ratio = 0.9  # 10*0.9 = 9 frames needs to contain hidden_data to be classified as "hidden_data"
     height_crop = 32
