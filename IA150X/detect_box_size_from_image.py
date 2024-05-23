@@ -158,7 +158,6 @@ def test_videos_from_csv(file_csv, nr_of_frames_checked, data_ratio):
                 else:
                     correct_per_type[type]["no_hidden_data"] = correct_per_type[type]["no_hidden_data"] + 1
             else:
-                print(row['name'])
                 false = false + 1
                 if hidden_data == 1:
                     false_per_type[type]['hidden_data'] = false_per_type[type]['hidden_data'] + 1
